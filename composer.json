@@ -1,0 +1,37 @@
+{
+    "name": "bcen/ci-dispatcher",
+    "authors": [
+        {
+            "name": "Bocai Cen",
+            "email": "bocai.cen@gmail.com"
+        }
+    ],
+
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "ellislab/codeigniter",
+                "version": "2.1.0",
+                "dist": {
+                    "url": "http://codeigniter.com/download_files/reactor/CodeIgniter_2.1.0.zip",
+                    "type": "zip"
+                },
+                "autoload": {
+                    "classmap": ["application/", "system/"]
+                }
+            }
+        }
+    ],
+
+    "autoload": {
+        "psr-0": {
+            "Dispatcher": "src/",
+            "Dispatcher\\Tests": "tests/"
+        }
+    },
+
+    "require-dev": {
+        "ellislab/codeigniter": "2.1.0"
+    }
+}

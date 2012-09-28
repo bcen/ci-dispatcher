@@ -1,2 +1,2 @@
-ci-dispatcher
+CodeIgniter-Dispatcher (WIP)
 =============
