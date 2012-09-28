@@ -29,8 +29,8 @@ abstract class HttpResponse
 
     public function __get($key)
     {
-        if (method_exists($this, 'get'.ucfirst($key))) {
-            return $this->{'get'.$key};
+        if (method_exists($this, 'get' . ucfirst($key))) {
+            return $this->{'get' . $key};
         } else if (property_exists($this, '_'.$key)) {
             return $this->{'_'.$key};
         }
@@ -39,7 +39,7 @@ abstract class HttpResponse
         // http://www.php.net/manual/en/language.oop5.overloading.php#object.get
         $trace = debug_backtrace();
         trigger_error(
-            'Undefined property via __get(): ' . $name .
+            'Undefined property via __get(): ' . $key .
             ' in ' . $trace[0]['file'] .
             ' on line ' . $trace[0]['line'],
             E_USER_NOTICE);

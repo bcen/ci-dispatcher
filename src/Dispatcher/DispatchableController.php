@@ -69,11 +69,6 @@ abstract class DispatchableController
         return new ViewTemplateResponse($merged);
     }
 
-    /**
-     * Returns a `HttpResponse` that indicates it is a raw html response
-     * @param  string       $html html
-     * @return HttpResponse
-     */
     protected function renderHtml($html = '')
     {
         return new RawHtmlResponse(array(
@@ -81,12 +76,6 @@ abstract class DispatchableController
         ));
     }
 
-    /**
-     * Returns a `HttpResponse` that indicates we are rendering as json data
-     * @param  array|object  $data       json encodable data
-     * @param  integer       $statusCode status code
-     * @return HttpResponse
-     */
     protected function renderJson($data = NULL,
                                   $statusCode = 200,
                                   array $extra = array())
