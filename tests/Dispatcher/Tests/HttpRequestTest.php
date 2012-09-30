@@ -56,6 +56,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     public function testPOST()
     {
         $_POST['var1'] = 'var1';
+        $_GET['var1'] = 'var2';
         $this->assertEquals($_POST['var1'], $this->request->POST('var1'));
         $this->assertEquals($_POST['var1'], $this->request->getParam('var1'));
         $this->assertEquals('default', $this->request->POST('var2', 'default'));
