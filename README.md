@@ -2,17 +2,17 @@ CodeIgniter-Dispatcher (WIP)
 ============================
 
 
-Introduction:
+Introduction
 -------------
 
 CodeIgniter-Dispatcher uses CodeIgniter's _remap function to do an extra routing
 to a class-based controller instead of function-based.
 
 
-Example:
+Usage
 --------
 
-#### CodeIgniter's function-based controller: ####
+##### CodeIgniter's function-based controller #####
 
 ```php
 <?php
@@ -26,7 +26,7 @@ class Welcome extends CI_Controller
 }
 ```
 
-#### With CodeIgniter-Dispatcher's class-based controller: ####
+##### With CodeIgniter-Dispatcher's class-based controller #####
 
 ```php
 <?php
@@ -41,3 +41,25 @@ class Index extends Dispatcher\DispatchableController
     }
 }
 ```
+
+
+Installtion:
+------------
+
+1. Download the [`composer.phar`](http://getcomposer.org/composer.phar) executable or use the installer
+
+    ```sh
+    curl -s http://getcomposer.org/installer | php
+    ```
+
+2. Add this to composer.json
+
+    ```json
+    {
+        "require": {
+            "bcen/ci-dispatcher": "*"
+        }
+    }
+    ```
+
+3. Run composer `php composer.phar install`
