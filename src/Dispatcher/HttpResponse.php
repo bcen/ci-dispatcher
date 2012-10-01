@@ -77,7 +77,7 @@ abstract class HttpResponse implements HttpResponseInterface
         return $this->contextData;
     }
 
-    public function setData(array $data)
+    public function setData($data)
     {
         $this->contextData = $data;
         return $this;
