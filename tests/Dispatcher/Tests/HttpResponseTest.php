@@ -35,6 +35,9 @@ class HttpResponseTest extends \PHPUnit_Framework_Testcase
         $data = $response->getData();
         $this->assertEquals($objHash, spl_object_hash($data['obj']));
         $this->assertEquals('application/json', $response->getContentType());
+
+        $response->setData(NULL);
+        $this->assertNull($response->getData());
     }
 
     public function testErrorResponse()
