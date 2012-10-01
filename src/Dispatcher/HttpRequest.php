@@ -70,7 +70,8 @@ class HttpRequest implements HttpRequestInterface
 
     public function getCookie($key, $default = NULL, $sanitize = TRUE)
     {
-        $this->_fetch($this->_ci()->input->cookie($key, $sanitize), $default);
+        return $this->_fetch(
+            $this->_ci()->input->cookie($key, $sanitize), $default);
     }
 
     public function getHeader($key, $default = NULL)
