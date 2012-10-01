@@ -69,8 +69,8 @@ Installtion:
     Dispatcher\BootstrapInstaller::run($route);
     ```
 
-`Dispatcher\BootstrapInstaller::run($route);` will create 3 files inside of CodeIgniter's `APPPATH`,
-if you want to skip the file creation, add `TRUE` to the second argument.
+`Dispatcher\BootstrapInstaller::run($route);` will create 3 files inside of CodeIgniter's
+`APPPATH`, if you want to skip the file creation, add `TRUE` to the second argument.
 
     ```php
     Dispatcher\BootstrapInstaller::run($route, TRUE);
