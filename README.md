@@ -9,10 +9,10 @@ CodeIgniter-Dispatcher uses CodeIgniter's _remap function to do an extra routing
 to a class-based controller instead of function-based.
 
 
-Usage
+Example
 --------
 
-##### CodeIgniter's function-based controller #####
+CodeIgniter's function-based controller
 
 ```php
 <?php
@@ -26,7 +26,7 @@ class Welcome extends CI_Controller
 }
 ```
 
-##### With CodeIgniter-Dispatcher's class-based controller #####
+With CodeIgniter-Dispatcher's class-based controller
 
 ```php
 <?php
@@ -63,3 +63,8 @@ Installtion:
     ```
 
 3. Run composer `php composer.phar install`
+
+4. Include `autoload.php` to your project and add this to `routes.php`
+    ```php
+    Dispatcher\BootstrapInstaller::run($route);
+    ```
