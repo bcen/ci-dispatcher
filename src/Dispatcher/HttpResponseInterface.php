@@ -22,4 +22,10 @@ interface HttpResponseInterface
     public function getData();
 
     public function setData(array $data);
+
+    public function getHeader($key);
+
+    public function setHeader($key, $value);
+
+    public function getHeaders();
 }
