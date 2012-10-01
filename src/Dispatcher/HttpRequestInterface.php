@@ -11,7 +11,7 @@ interface HttpRequestInterface
 
     /**
      * Gets the request method.
-     * @return string
+     * @return string The method string in uppercase, e.g. 'POST', 'GET'
      */
     public function getMethod();
 
@@ -27,21 +27,61 @@ interface HttpRequestInterface
      */
     public function isCli();
 
-    public function GET($key = NULL, $default = NULL, $sanitize = FALSE);
+    /**
+     * Retrieves the query string with the given $key.
+     * @param string  $key      The name of the query string pair
+     * @param mixed   $default  The default value if $key is not found
+     * @param boolean $sanitize Whether to sanitize the return value
+     * @return mixed            Returns all query string pair if $key is null,
+     *                          otherwise, returns the value of the pair
+     */
+    public function GET($key = null, $default = null, $sanitize = false);
 
-    public function POST($key = NULL, $default = NULL, $sanitize = FALSE);
+    /**
+     * Retrieves the POST param with the given $key.
+     * @param string  $key      The name of the POST param pair
+     * @param mixed   $default  The default value if $key is not found
+     * @param boolean $sanitize Whether to sanitize the return value
+     * @return mixed            Returns all POST param pair if $key is null,
+     *                          otherwise, returns the value of the pair
+     */
+    public function POST($key = null, $default = null, $sanitize = false);
 
-    public function PUT($key = NULL, $default = NULL, $sanitize = FALSE);
+    /**
+     * Retrieves the PUT param with the given $key.
+     * @param string  $key      The name of the PUT param pair
+     * @param mixed   $default  The default value if $key is not found
+     * @param boolean $sanitize Whether to sanitize the return value
+     * @return mixed            Returns all PUT param pair if $key is null,
+     *                          otherwise, returns the value of the pair
+     */
+    public function PUT($key = null, $default = null, $sanitize = false);
 
-    public function DELETE($key = NULL, $default = NULL, $sanitize = FALSE);
+    /**
+     * Retrieves the DELETE param with the given $key.
+     * @param string  $key      The name of the DELETE param pair
+     * @param mixed   $default  The default value if $key is not found
+     * @param boolean $sanitize Whether to sanitize the return value
+     * @return mixed            Returns all DELETE param pair if $key is null,
+     *                          otherwise, returns the value of the pair
+     */
+    public function DELETE($key = null, $default = null, $sanitize = false);
 
-    public function getParam($key = NULL, $default = NULL, $sanitize = FALSE);
+    /**
+     * Retrieves the param pair from both GET and POST.
+     * <i>Note: POST has precedence over GET</i>
+     * @param string  $key      The name of the param pair
+     * @param mixed   $default  The default value if $key is not found
+     * @param boolean $sanitize Whether to sanitize the return value
+     * @return mixed            Returns the value of the pair
+     */
+    public function getParam($key, $default = null, $sanitize = false);
 
-    public function getCookie($key, $default = NULL);
+    public function getCookie($key, $default = null);
 
-    public function getHeader($key, $default = NULL);
+    public function getHeader($key, $default = null);
 
-    public function getServerParam($key, $default = NULL);
+    public function getServerParam($key, $default = null);
 
     public function getScheme();
 

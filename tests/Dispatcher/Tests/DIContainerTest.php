@@ -11,7 +11,7 @@ class DIContainerTest extends \PHPUnit_Framework_Testcase
     /**
      * @var string
      */
-    private $sharedObjHash;
+    public $sharedObjHash;
 
     public function setUp()
     {

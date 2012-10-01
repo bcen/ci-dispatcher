@@ -53,44 +53,26 @@ abstract class DispatchableController
     {
         $views = is_array($this->views) ? $this->views : array($this->views);
         if (empty($views)) {
-            show_error('Declare your views as protected '.
+            show_error('Declare your views as protected ' .
                        '$views = array("index") or "index"');
         }
         return $views;
     }
 
-    protected function renderView(array $data = array(),
-                                  array $extra = array())
+    protected function renderView(array $data = array(), $statusCode = 200)
     {
-        $merged = array_merge(
-            $extra,
-            array('contextData' => $data, 'views' => $this->getViews())
-        );
-        return new ViewTemplateResponse($merged);
+        return ViewTemplateResponse::create($statusCode)
+            ->setData($data)
+            ->setViews($this->getViews());
     }
 
-    /**
-     * Returns a `HttpResponse` that indicates it is a raw html response
-     * @param  string       $html html
-     * @return HttpResponse
-     */
-    protected function renderHtml($html = '')
+    protected function renderHtml($html = '', $statusCode = 200)
     {
-        return new RawHtmlResponse(array(
-            'content' => $html
-        ));
+        return RawHtmlResponse::create($statusCode, $html);
     }
 
-    /**
-     * Returns a `HttpResponse` that indicates we are rendering as json data
-     * @param  array|object  $data       json encodable data
-     * @param  integer       $statusCode status code
-     * @return HttpResponse
-     */
-    protected function renderJson($data = NULL,
-                                  $statusCode = 200,
-                                  array $extra = array())
+    protected function renderJson($data = NULL, $statusCode = 200)
     {
-        return new JsonResponse($data, $statusCode, $extra);
+        return JsonResponse::create($statusCode)->setData($data);
     }
 }
