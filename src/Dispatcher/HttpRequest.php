@@ -62,7 +62,7 @@ class HttpRequest implements HttpRequestInterface
         return $this->PUT($key, $default, $sanitize);
     }
 
-    public function getParam($key = NULL, $default = NULL, $sanitize = FALSE)
+    public function getParam($key, $default = NULL, $sanitize = FALSE)
     {
         return $this->POST($key,
             $this->GET($key, $default, $sanitize), $sanitize);
