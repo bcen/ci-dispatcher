@@ -24,7 +24,8 @@ abstract class HttpResponse implements HttpResponseInterface
     {
         $this->setStatusCode($statusCode)
              ->setContentType('text/html')
-             ->setContent($content);
+             ->setContent($content)
+             ->setHeaders($headers);
     }
 
     public function getStatusCode()
@@ -96,5 +97,11 @@ abstract class HttpResponse implements HttpResponseInterface
     public function getHeaders()
     {
         return $this->headers;
+    }
+
+    public function setHeaders(array $headers)
+    {
+        $this->headers = $headers;
+        return $this;
     }
 }

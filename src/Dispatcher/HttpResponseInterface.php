@@ -28,4 +28,6 @@ interface HttpResponseInterface
     public function setHeader($key, $value);
 
     public function getHeaders();
+
+    public function setHeaders(array $headers);
 }
