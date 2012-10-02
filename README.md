@@ -3,14 +3,14 @@ CodeIgniter-Dispatcher (WIP)
 
 
 Introduction
--------------
+------------
 
 CodeIgniter-Dispatcher uses CodeIgniter's _remap function to do an extra routing
 to a class-based controller instead of function-based.
 
 
 Example
---------
+-------
 
 CodeIgniter's function-based controller
 
@@ -43,8 +43,8 @@ class Index extends Dispatcher\DispatchableController
 ```
 
 
-Installtion:
-------------
+Installtion
+-----------
 
 1. Download the [`composer.phar`](http://getcomposer.org/composer.phar) executable or use the installer
 
@@ -70,6 +70,6 @@ Installtion:
     ```
 
 `Dispatcher\BootstrapInstaller::run($route);` will create 3 files inside of CodeIgniter's
-`APPPATH`, if you want to skip the file creation, add `TRUE` to the second argument.
+`APPPATH`, if you want to skip the file creation, add `TRUE` to to skip the file check.
 
     Dispatcher\BootstrapInstaller::run($route, TRUE);
