@@ -81,20 +81,21 @@ Features
 --------
 
 ##### Poor man's dependency injection #####
-    ```php
-    // dependencies.php
-    $config['container']['userDao'] = function($container) {
-        return new UserDao();
-    };
 
-    // user_status.php
-    <?php
+```php
+// dependencies.php
+$config['container']['userDao'] = function($container) {
+    return new UserDao();
+};
 
-    class User_Status extends Dispatcher\DispatchableController
+// user_status.php
+<?php
+
+class User_Status extends Dispatcher\DispatchableController
+{
+    public function __construct($userDao)
     {
-        public function __construct($userDao)
-        {
-            $userDao->findUserById(1);
-        }
+        $userDao->findUserById(1);
     }
-    ```
+}
+```
