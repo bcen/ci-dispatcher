@@ -21,5 +21,13 @@ interface HttpResponseInterface
 
     public function getData();
 
-    public function setData(array $data);
+    public function setData($data);
+
+    public function getHeader($key);
+
+    public function setHeader($key, $value);
+
+    public function getHeaders();
+
+    public function setHeaders(array $headers);
 }

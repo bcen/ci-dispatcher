@@ -66,4 +66,10 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     {
         $this->assertEquals('HTTP', $this->request->getScheme());
     }
+
+    public function testGetCookie()
+    {
+        $_COOKIE['somecookie'] = 'value';
+        $this->assertEquals('value', $this->request->getCookie('somecookie'));
+    }
 }
