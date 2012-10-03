@@ -89,4 +89,9 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
         $_COOKIE['somecookie'] = 'value';
         $this->assertEquals('value', $this->request->getCookie('somecookie'));
     }
+
+    public function test_getUserAgent_InUnitTest_ShouldReturnFalse()
+    {
+        $this->assertFalse($this->request->getUserAgent());
+    }
 }
