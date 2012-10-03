@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Tests;
 
-use Dispatcher\Tests\Stub\SimpleControllerMock;
+use Dispatcher\Tests\Stub\SimpleControllerStub;
 
 class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 {
@@ -12,7 +12,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
     public function setUp()
     {
-        $this->controller = new SimpleControllerMock();
+        $this->controller = new SimpleControllerStub();
         if ($this->controller === NULL) {
             $this->fail();
         }

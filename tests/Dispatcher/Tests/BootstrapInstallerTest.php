@@ -3,7 +3,7 @@ namespace Dispatcher\Tests;
 
 class BootstrapInstallerTest extends \PHPUnit_Framework_Testcase
 {
-    public function testRun()
+    public function test_run_ShouldAlterRoute()
     {
         $route = array();
         \Dispatcher\BootstrapInstaller::run($route, TRUE);
