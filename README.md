@@ -99,3 +99,17 @@ class User_Status extends Dispatcher\DispatchableController
     }
 }
 ```
+
+##### Middlewares #####
+
+```php
+<?php
+
+class DebugFilter extends Dispatcher\DispatchableMiddleware
+{
+    public function processRequest(Dispatcher\HttpRequestInterface $req)
+    {
+        // do something
+    }
+}
+```
