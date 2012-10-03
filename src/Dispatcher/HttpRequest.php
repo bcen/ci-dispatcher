@@ -120,7 +120,7 @@ class HttpRequest implements HttpRequestInterface
 
     public function getUserAgent()
     {
-        return $this->_ci()->input->user_agent();
+        return $this->_fetch($this->_ci()->input->user_agent(), '');
     }
 
     public function getBaseUrl()
