@@ -21,7 +21,7 @@ class HttpResponseTest extends \PHPUnit_Framework_Testcase
         }
     }
 
-    public function testDefaultValues()
+    public function test_getContentType_OnViewTemplateDefault_ShouldReturn200StatusCode()
     {
         $this->assertEquals('text/html', $this->vtResponse->getContentType());
         $this->assertEquals(200, $this->vtResponse->getStatusCode());

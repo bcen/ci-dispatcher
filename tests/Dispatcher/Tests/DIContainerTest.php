@@ -45,19 +45,7 @@ class DIContainerTest extends \PHPUnit_Framework_Testcase
         }
     }
 
-    public function testGetContainerDependency()
-    {
-        $stdObj = $this->container['stdObj'];
-        $hash = spl_object_hash($stdObj);
-
-        $this->assertNotNull($stdObj);
-        $this->assertEquals('123456', $stdObj->encryptionKey);
-
-        $another = $this->container['stdObj'];
-        $this->assertNotEquals($hash, spl_object_hash($another));
-    }
-
-    public function testGetSharedContainerDependency()
+    public function test_containerOffsetGet_MultipleCallToSharedObjectWithSameKey_ShouldReturnSameObjectHash()
     {
         $sharedObj = $this->container['sharedObj'];
         $this->assertEquals($this->sharedObjHash, spl_object_hash($sharedObj));
