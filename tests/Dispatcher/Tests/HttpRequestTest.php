@@ -16,60 +16,82 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
         }
     }
 
-    public function testIsCli()
+    public function test_isCli_InUnitTest_ShouldReturnTrue()
     {
         $this->assertTrue($this->request->isCli());
+    }
+
+    public function test_isAjax_InUnitTest_ShouldReturnFalse()
+    {
         $this->assertFalse($this->request->isAjax());
     }
 
-    public function testGetId()
+    public function test_getId_MultipleCall_ShouldReturnSameId()
     {
         $id = $this->request->getId();
-        $this->assertNotEmpty($id);
 
         $another = $this->request->getId();
         $this->assertEquals($id, $another);
     }
 
-    public function testGetIp()
+    public function test_getIp_OnInvalidHost_ShouldNotBeEmpty()
     {
         $this->assertNotEmpty($this->request->getIp());
-        $this->assertNotEmpty($this->request->getIpv4());
-
-        try {
-            $this->request->getIpv6();
-        } catch (\InvalidArgumentException $ex) {
-            return;
-        }
-
-        $this->fail('IPv6 is supported?');
     }
 
-    public function testGET()
+    public function test_GET_FromSuperGlobal_ShouldBeEqual()
     {
         $_GET['var1'] = 'var1';
         $this->assertEquals($_GET['var1'], $this->request->GET('var1'));
-        $this->assertEquals($_GET['var1'], $this->request->getParam('var1'));
-        $this->assertEquals('default', $this->request->GET('var2', 'default'));
     }
 
-    public function testPOST()
+    public function test_GET_OnInvalidKey_ShouldReturnDefaultValue()
+    {
+        $_GET['key'] = 'value';
+        $this->assertEquals('default',
+            $this->request->GET('invalidKey', 'default'));
+    }
+
+    public function test_POST_FromSuperGlobal_ShouldBeEqual()
     {
         $_POST['var1'] = 'var1';
-        $_GET['var1'] = 'var2';
         $this->assertEquals($_POST['var1'], $this->request->POST('var1'));
-        $this->assertEquals($_POST['var1'], $this->request->getParam('var1'));
-        $this->assertEquals('default', $this->request->POST('var2', 'default'));
     }
 
-    public function testGetScheme()
+    public function test_POST_OnInvalidKey_ShouldReturnDefaultValue()
+    {
+        $_POST['key'] = 'value';
+        $this->assertEquals('default',
+            $this->request->POST('invalidKey', 'default'));
+    }
+
+    public function test_getParam_FromSuperGlobal_ShouldHavePostPrecedence()
+    {
+        $_GET['var1'] = '1';
+        $_POST['var1'] = '2';
+        $this->assertEquals('2', $this->request->getParam('var1'));
+    }
+
+    public function test_getParam_WithSanitizeOnAmpersand_ShouldAppendSemiColon()
+    {
+        $_POST['key'] = '&thiswilldo';
+        $this->assertEquals('&thiswilldo;',
+            $this->request->getParam('key', NULL, TRUE));
+    }
+
+    public function test_getScheme_InUnitTest_ShouldReturnHttp()
     {
         $this->assertEquals('HTTP', $this->request->getScheme());
     }
 
-    public function testGetCookie()
+    public function test_getCookie_FromSuperGlobal_ShouldBeEqual()
     {
         $_COOKIE['somecookie'] = 'value';
         $this->assertEquals('value', $this->request->getCookie('somecookie'));
+    }
+
+    public function test_getUserAgent_InUnitTest_ShouldBeEmpty()
+    {
+        $this->assertEquals('', $this->request->getUserAgent());
     }
 }
