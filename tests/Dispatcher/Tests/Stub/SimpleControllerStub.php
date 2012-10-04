@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Tests\Stub;
 
-class SimpleControllerMock extends \Dispatcher\DispatchableController
+class SimpleControllerStub extends \Dispatcher\DispatchableController
 {
     protected $views = 'index';
 }

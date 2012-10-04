@@ -11,8 +11,13 @@ use ReflectionException;
  * Re-routes incoming uri to class based controller instead of CI's default
  * function based controller
  */
-class BootstrapController extends \CI_Controller
+class BootstrapController
 {
+    /**
+     * @var \CI_Controller
+     */
+    private $CI;
+
     /**
      * Array of middlewares to handle before and after the dispatch.
      * @var array
@@ -36,16 +41,16 @@ class BootstrapController extends \CI_Controller
      */
     public function __construct()
     {
-        parent::__construct();
+        $this->CI = get_instance();
 
-        foreach ($this->getDispatcherConfig() as $k => $v) {
+        foreach ($this->loadDispatcherConfig() as $k => $v) {
             if (property_exists($this, '_' . $k)) {
                 $this->{'_' . $k} = $v;
             }
         }
 
         $this->container = $this->createContainer(
-            $this->getDependenciesConfig());
+            $this->loadDependenciesConfig());
     }
 
     /**
@@ -54,7 +59,8 @@ class BootstrapController extends \CI_Controller
      *
      * @param $method string The CodeIgniter controller function to be called.
      * @param $uri    array  Array of uri segments
-     * @throws \Exception
+     * @throws \Exception Exception thrown if request does not implement
+     *                    {@link \Dispatcher\HttpRequestInterface}
      */
     public function _remap($method, $uri)
     {
@@ -67,14 +73,18 @@ class BootstrapController extends \CI_Controller
 
         $middlewares = $this->loadMiddlewares();
         foreach ($middlewares as $m) {
-            $m->processRequest($request);
+            if (method_exists($m, 'processRequest')) {
+                $m->processRequest($request);
+            }
         }
 
         array_unshift($uri, $method);
         $response = $this->dispatch($uri, $request);
 
         for ($i = count($middlewares) - 1; $i >= 0; $i--) {
-            $middlewares[$i]->processResponse($response);
+            if (method_exists($middlewares[$i], 'processResponse')) {
+                $middlewares[$i]->processResponse($response);
+            }
         }
 
         $this->renderResponse($request, $response);
@@ -84,7 +94,7 @@ class BootstrapController extends \CI_Controller
      * Loads and returns the Dispatcher configuration.
      * @return array The Dispatcher configuration array
      */
-    protected function getDispatcherConfig()
+    protected function loadDispatcherConfig()
     {
         $config = array();
         require(APPPATH . 'config/dispatcher.php');
@@ -95,7 +105,7 @@ class BootstrapController extends \CI_Controller
      * Loads and returns the dependency container configuration.
      * @return array The dependency configuration for DIContainer
      */
-    protected function getDependenciesConfig()
+    protected function loadDependenciesConfig()
     {
         $config = array();
         require(APPPATH . 'config/dependencies.php');
@@ -147,14 +157,14 @@ class BootstrapController extends \CI_Controller
     protected function renderResponse(HttpRequestInterface $request,
                                       HttpResponseInterface $response)
     {
-        $this->output->set_content_type($response->getContentType());
+        $this->CI->output->set_content_type($response->getContentType());
 
         foreach ($response->getHeaders() as $k => $v) {
-            $this->output->set_header($k . ': ' . $v);
+            $this->CI->output->set_header($k . ': ' . $v);
         }
 
         if ($response->getStatusCode() !== 200) {
-            $this->output->set_status_header($response->getStatusCode());
+            $this->CI->output->set_status_header($response->getStatusCode());
         }
 
         // TODO: respect to the `Accept` header?
@@ -162,25 +172,28 @@ class BootstrapController extends \CI_Controller
             show_404();
         } else if ($response instanceof ViewTemplateResponse) {
             foreach ($response->getViews() as $v) {
-                $this->load->view($v, $response->getData());
+                $this->CI->load->view($v, $response->getData());
             }
         } else if ($response instanceof RawHtmlResponse) {
-            $this->output->set_output($response->getContent());
+            $this->CI->output->set_output($response->getContent());
         } else if ($response instanceof JsonResponse) {
             $content = (is_array($response->getData())
                        || is_object($response->getData()))
                        ? json_encode($response->getData())
                        : '';
-            $this->output->set_output($content);
+            $this->CI->output->set_output($content);
         }
     }
 
     /**
-     * Takes the incoming uri and request and returns a `HttpResponse`
+     * Dispatches the incoming request to the proper resource.
+     * @param array $uri                    The incoming resource URI in array
+     * @param HttpRequestInterface $request The incoming request object
+     * @return \Dispatcher\HttpResponseInterface
      */
     protected function dispatch($uri, HttpRequestInterface $request)
     {
-        // Gets the class infomation that we will dispatching to
+        // gets the class infomation that we will be dispatching to
         $classInfo = $this->_getClassInfo($uri);
 
         // 404 page if we cannot find any assocaited class info
@@ -191,8 +204,8 @@ class BootstrapController extends \CI_Controller
         }
 
         // Finally, let's load the class and dispatch it
-        $class = $this->_loadClass($classInfo->classPath,
-            $classInfo->className);
+        $class = $this->_loadClass($classInfo->className,
+            $classInfo->classPath);
 
         // see what is the requested method, e.g. 'GET', 'POST' and etc...
         try {
@@ -232,7 +245,7 @@ class BootstrapController extends \CI_Controller
         foreach ($this->_middlewares as $name) {
             $mw = NULL;
             if (class_exists($name)) {
-                $mw = $this->_loadClass('', $name);
+                $clspath = '';
             } else {
                 $paths = explode('/', $name);
                 $name = array_pop($paths);
@@ -246,10 +259,10 @@ class BootstrapController extends \CI_Controller
                     array(strtolower($name).EXT)
                 );
                 $clspath = implode('/', $parts);
-                $mw = $this->_loadClass($clspath, $name);
             }
 
-            if ($mw instanceof DispatchableMiddleware) {
+            $mw = $this->_loadClass($name, $clspath);
+            if ($mw !== null) {
                 $middlewares[] = $mw;
             }
         }
@@ -308,14 +321,15 @@ class BootstrapController extends \CI_Controller
     }
 
     /**
-     * Loads and returns an instance of $className
+     * Loads and returns an instance of $className with the given $classPath.
+     * <i>Note: The default implementation uses Reflection to inject
+     * dependencies into constructor from the dependencies config.</i>
      *
-     * @param  $classPath string The file path of the class
      * @param  $className string The class to be loaded
-     * @throws \Exception
-     * @return object            The instance of $className
+     * @param  $classPath string The optional file path of the class
+     * @return object|null       The instance of the class, or null if failed
      */
-    private function _loadClass($classPath, $className)
+    private function _loadClass($className, $classPath = '')
     {
         if (file_exists($classPath)) {
             require_once($classPath);
@@ -326,7 +340,14 @@ class BootstrapController extends \CI_Controller
         }
 
         $clsReflect = new ReflectionClass($className);
-        $expectedParams = $clsReflect->getConstructor()->getParameters();
+        $ctor = $clsReflect->getConstructor();
+
+        // if constructor found, get all the parameters
+        // for dependency injection
+        $expectedParams = array();
+        if ($ctor) {
+            $expectedParams = $ctor->getParameters();
+        }
 
         $deps = array();
         foreach ($expectedParams as $param) {
@@ -348,12 +369,12 @@ class BootstrapController extends \CI_Controller
      */
     private function _dispatchAsController(DispatchableController $class,
                                            $classInfo,
-                                           HttpRequest $request)
+                                           HttpRequestInterface $request)
     {
-        $params = array_unshift($classInfo->params, $request);
+        array_unshift($classInfo->params, $request);
         if (!$this->_debug) {
             set_error_handler(function() {
-                throw new Exception('Hacky exception to hide the CI '.
+                throw new Exception('Hacky exception to hide the CI ' .
                                     'error handler message');
             });
             try {
@@ -362,7 +383,7 @@ class BootstrapController extends \CI_Controller
                         $class, $request->getMethod()),
                     $classInfo->params);
             } catch (Exception $ex) {
-                log_message('debug', '404 due to '.$ex->getMessage());
+                log_message('debug', '404 due to ' . $ex->getMessage());
                 return new Error404Response();
             }
             restore_error_handler();

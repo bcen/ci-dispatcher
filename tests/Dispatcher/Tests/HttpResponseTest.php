@@ -21,7 +21,7 @@ class HttpResponseTest extends \PHPUnit_Framework_Testcase
         }
     }
 
-    public function testDefaultValues()
+    public function test_getContentType_OnViewTemplateDefault_ShouldReturn200StatusCode()
     {
         $this->assertEquals('text/html', $this->vtResponse->getContentType());
         $this->assertEquals(200, $this->vtResponse->getStatusCode());
@@ -35,6 +35,9 @@ class HttpResponseTest extends \PHPUnit_Framework_Testcase
         $data = $response->getData();
         $this->assertEquals($objHash, spl_object_hash($data['obj']));
         $this->assertEquals('application/json', $response->getContentType());
+
+        $response->setData(NULL);
+        $this->assertNull($response->getData());
     }
 
     public function testErrorResponse()
