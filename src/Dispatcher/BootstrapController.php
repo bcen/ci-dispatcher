@@ -41,7 +41,7 @@ class BootstrapController
      */
     public function __construct()
     {
-        $CI = get_instance();
+        $this->CI = get_instance();
 
         foreach ($this->getDispatcherConfig() as $k => $v) {
             if (property_exists($this, '_' . $k)) {
