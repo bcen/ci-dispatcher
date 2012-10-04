@@ -392,8 +392,8 @@ function &get_instance()
     return CI_Controller::get_instance();
 }
 
-$CI = new CI_Controller();
-define('CI_HASH', spl_object_hash($CI));
+\Dispatcher\BootstrapInstaller::install();
+$CI = new \Dispatcher\BootstrapController();
 
 /*
  * ------------------------------------------------------
@@ -435,6 +435,3 @@ if (class_exists('CI_DB') AND isset($CI->db))
 {
     $CI->db->close();
 }
-
-
-\Dispatcher\BootstrapInstaller::install();

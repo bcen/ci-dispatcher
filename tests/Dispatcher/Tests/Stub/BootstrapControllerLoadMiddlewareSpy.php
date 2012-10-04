@@ -10,6 +10,11 @@ class BootstrapControllerLoadMiddlewareSpy extends BootstrapController
 {
     public $middlewares = array();
 
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
     protected function dispatch($uri, HttpRequestInterface $request)
     {
         // DO NOTHING

@@ -11,13 +11,8 @@ use ReflectionException;
  * Re-routes incoming uri to class based controller instead of CI's default
  * function based controller
  */
-class BootstrapController
+class BootstrapController extends \CI_Controller
 {
-    /**
-     * @var \CI_Controller
-     */
-    private $CI;
-
     /**
      * Array of middlewares to handle before and after the dispatch.
      * @var array
@@ -41,7 +36,7 @@ class BootstrapController
      */
     public function __construct()
     {
-        $this->CI = get_instance();
+        parent::__construct();
 
         foreach ($this->loadDispatcherConfig() as $k => $v) {
             if (property_exists($this, '_' . $k)) {
@@ -157,14 +152,14 @@ class BootstrapController
     protected function renderResponse(HttpRequestInterface $request,
                                       HttpResponseInterface $response)
     {
-        $this->CI->output->set_content_type($response->getContentType());
+        $this->output->set_content_type($response->getContentType());
 
         foreach ($response->getHeaders() as $k => $v) {
-            $this->CI->output->set_header($k . ': ' . $v);
+            $this->output->set_header($k . ': ' . $v);
         }
 
         if ($response->getStatusCode() !== 200) {
-            $this->CI->output->set_status_header($response->getStatusCode());
+            $this->output->set_status_header($response->getStatusCode());
         }
 
         // TODO: respect to the `Accept` header?
@@ -172,16 +167,16 @@ class BootstrapController
             show_404();
         } else if ($response instanceof ViewTemplateResponse) {
             foreach ($response->getViews() as $v) {
-                $this->CI->load->view($v, $response->getData());
+                $this->load->view($v, $response->getData());
             }
         } else if ($response instanceof RawHtmlResponse) {
-            $this->CI->output->set_output($response->getContent());
+            $this->output->set_output($response->getContent());
         } else if ($response instanceof JsonResponse) {
             $content = (is_array($response->getData())
                        || is_object($response->getData()))
                        ? json_encode($response->getData())
                        : '';
-            $this->CI->output->set_output($content);
+            $this->output->set_output($content);
         }
     }
 
