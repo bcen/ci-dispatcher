@@ -59,7 +59,8 @@ class BootstrapController
      *
      * @param $method string The CodeIgniter controller function to be called.
      * @param $uri    array  Array of uri segments
-     * @throws \Exception
+     * @throws \Exception Exception thrown if request does not implement
+     *                    {@link \Dispatcher\HttpRequestInterface}
      */
     public function _remap($method, $uri)
     {
@@ -185,11 +186,14 @@ class BootstrapController
     }
 
     /**
-     * Takes the incoming uri and request and returns a `HttpResponse`
+     * Dispatches the incoming request to the proper resource.
+     * @param array $uri                    The incoming resource URI in array
+     * @param HttpRequestInterface $request The incoming request object
+     * @return \Dispatcher\HttpResponseInterface
      */
     protected function dispatch($uri, HttpRequestInterface $request)
     {
-        // Gets the class infomation that we will dispatching to
+        // gets the class infomation that we will be dispatching to
         $classInfo = $this->_getClassInfo($uri);
 
         // 404 page if we cannot find any assocaited class info
@@ -317,7 +321,9 @@ class BootstrapController
     }
 
     /**
-     * Loads and returns an instance of $className with the given $classPath
+     * Loads and returns an instance of $className with the given $classPath.
+     * <i>Note: The default implementation uses Reflection to inject
+     * dependencies into constructor from the dependencies config.</i>
      *
      * @param  $className string The class to be loaded
      * @param  $classPath string The optional file path of the class
@@ -335,6 +341,9 @@ class BootstrapController
 
         $clsReflect = new ReflectionClass($className);
         $ctor = $clsReflect->getConstructor();
+
+        // if constructor found, get all the parameters
+        // for dependency injection
         $expectedParams = array();
         if ($ctor) {
             $expectedParams = $ctor->getParameters();
@@ -362,10 +371,10 @@ class BootstrapController
                                            $classInfo,
                                            HttpRequestInterface $request)
     {
-        $params = array_unshift($classInfo->params, $request);
+        array_unshift($classInfo->params, $request);
         if (!$this->_debug) {
             set_error_handler(function() {
-                throw new Exception('Hacky exception to hide the CI '.
+                throw new Exception('Hacky exception to hide the CI ' .
                                     'error handler message');
             });
             try {
@@ -374,7 +383,7 @@ class BootstrapController
                         $class, $request->getMethod()),
                     $classInfo->params);
             } catch (Exception $ex) {
-                log_message('debug', '404 due to '.$ex->getMessage());
+                log_message('debug', '404 due to ' . $ex->getMessage());
                 return new Error404Response();
             }
             restore_error_handler();
