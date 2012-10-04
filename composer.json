@@ -1,12 +1,15 @@
 {
     "name": "bcen/ci-dispatcher",
+    "description": "A CodeIgniter plugin for more restful controller",
+    "keywords": ["RESTful", "Controller", "CodeIgniter"],
+    "license": "MIT",
+    "homepage": "https://github.com/bcen/ci-dispatcher",
     "authors": [
         {
             "name": "Bocai Cen",
             "email": "bocai.cen@gmail.com"
         }
     ],
-
     "repositories": [
         {
             "type": "package",
@@ -23,14 +26,15 @@
             }
         }
     ],
-
     "autoload": {
         "psr-0": {
             "Dispatcher": "src/",
             "Dispatcher\\Tests": "tests/"
         }
     },
-
+    "require": {
+        "php": ">=5.3.0"
+    },
     "require-dev": {
         "ellislab/codeigniter": "2.1.0"
     }
