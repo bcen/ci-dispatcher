@@ -43,14 +43,14 @@ class BootstrapController
     {
         $this->CI = get_instance();
 
-        foreach ($this->getDispatcherConfig() as $k => $v) {
+        foreach ($this->loadDispatcherConfig() as $k => $v) {
             if (property_exists($this, '_' . $k)) {
                 $this->{'_' . $k} = $v;
             }
         }
 
         $this->container = $this->createContainer(
-            $this->getDependenciesConfig());
+            $this->loadDependenciesConfig());
     }
 
     /**
@@ -72,14 +72,18 @@ class BootstrapController
 
         $middlewares = $this->loadMiddlewares();
         foreach ($middlewares as $m) {
-            $m->processRequest($request);
+            if (method_exists($m, 'processRequest')) {
+                $m->processRequest($request);
+            }
         }
 
         array_unshift($uri, $method);
         $response = $this->dispatch($uri, $request);
 
         for ($i = count($middlewares) - 1; $i >= 0; $i--) {
-            $middlewares[$i]->processResponse($response);
+            if (method_exists($middlewares[$i], 'processResponse')) {
+                $middlewares[$i]->processResponse($response);
+            }
         }
 
         $this->renderResponse($request, $response);
@@ -89,7 +93,7 @@ class BootstrapController
      * Loads and returns the Dispatcher configuration.
      * @return array The Dispatcher configuration array
      */
-    protected function getDispatcherConfig()
+    protected function loadDispatcherConfig()
     {
         $config = array();
         require(APPPATH . 'config/dispatcher.php');
@@ -100,7 +104,7 @@ class BootstrapController
      * Loads and returns the dependency container configuration.
      * @return array The dependency configuration for DIContainer
      */
-    protected function getDependenciesConfig()
+    protected function loadDependenciesConfig()
     {
         $config = array();
         require(APPPATH . 'config/dependencies.php');
@@ -237,7 +241,7 @@ class BootstrapController
         foreach ($this->_middlewares as $name) {
             $mw = NULL;
             if (class_exists($name)) {
-                $mw = $this->_loadClass('', $name);
+                $clspath = '';
             } else {
                 $paths = explode('/', $name);
                 $name = array_pop($paths);
@@ -251,10 +255,10 @@ class BootstrapController
                     array(strtolower($name).EXT)
                 );
                 $clspath = implode('/', $parts);
-                $mw = $this->_loadClass($clspath, $name);
             }
 
-            if ($mw instanceof DispatchableMiddleware) {
+            $mw = $this->_loadClass($clspath, $name);
+            if ($mw !== null) {
                 $middlewares[] = $mw;
             }
         }
@@ -331,7 +335,11 @@ class BootstrapController
         }
 
         $clsReflect = new ReflectionClass($className);
-        $expectedParams = $clsReflect->getConstructor()->getParameters();
+        $ctor = $clsReflect->getConstructor();
+        $expectedParams = array();
+        if ($ctor) {
+            $expectedParams = $ctor->getParameters();
+        }
 
         $deps = array();
         foreach ($expectedParams as $param) {
