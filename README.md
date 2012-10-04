@@ -76,3 +76,40 @@ Installtion
     ```php
     Dispatcher\BootstrapInstaller::run($route, TRUE);
     ```
+
+Features
+--------
+
+##### Poor man's dependency injection #####
+
+```php
+// dependencies.php
+$config['container']['userDao'] = function($container) {
+    return new UserDao();
+};
+
+// user_status.php
+<?php
+
+class User_Status extends Dispatcher\DispatchableController
+{
+    public function __construct($userDao)
+    {
+        $userDao->findUserById(1);
+    }
+}
+```
+
+##### Middlewares #####
+
+```php
+<?php
+
+class DebugFilter extends Dispatcher\DispatchableMiddleware
+{
+    public function processRequest(Dispatcher\HttpRequestInterface $req)
+    {
+        // do something
+    }
+}
+```
