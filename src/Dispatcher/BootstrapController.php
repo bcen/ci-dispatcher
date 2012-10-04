@@ -353,7 +353,7 @@ class BootstrapController
      */
     private function _dispatchAsController(DispatchableController $class,
                                            $classInfo,
-                                           HttpRequest $request)
+                                           HttpRequestInterface $request)
     {
         $params = array_unshift($classInfo->params, $request);
         if (!$this->_debug) {
