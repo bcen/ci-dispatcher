@@ -1,15 +1,14 @@
 <?php
 namespace Dispatcher\Tests;
 
+use Dispatcher\Tests\Stub\BootstrapControllerLoadMiddlewareSpy;
+
 class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 {
     public function test__remap_OnNormalControlFlow_ShouldPass()
     {
         $ctrl = $this->getMock('Dispatcher\\BootstrapController',
-            array('loadMiddlewares', 'dispatch', 'renderResponse'),
-            array(),
-            '',
-            false);
+            array('loadMiddlewares', 'dispatch', 'renderResponse'));
 
         $ctrl->expects($this->once())
             ->method('loadMiddlewares')
@@ -25,9 +24,16 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
             ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
                    $this->isInstanceOf('Dispatcher\\HttpResponseInterface'));
 
-
         $ctrl->_remap('method', array('api', 'v1', 'books'));
+    }
 
-        $this->assertTrue(1 == 1);
+    public function test_loadMiddlewares_WithoutClasspath_ShouldBeCalled()
+    {
+        $ctrl = new BootstrapControllerLoadMiddlewareSpy();
+        $ctrl->_remap('method', array('api', 'v1', 'books'));
+        $this->assertEquals(1, count($ctrl->middlewares));
+        $mw = array_pop($ctrl->middlewares);
+        $this->assertTrue($mw->processRequestCalled);
+        $this->assertTrue($mw->processResponseCalled);
     }
 }
