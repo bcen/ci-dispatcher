@@ -200,8 +200,8 @@ class BootstrapController
         }
 
         // Finally, let's load the class and dispatch it
-        $class = $this->_loadClass($classInfo->classPath,
-            $classInfo->className);
+        $class = $this->_loadClass($classInfo->className,
+            $classInfo->classPath);
 
         // see what is the requested method, e.g. 'GET', 'POST' and etc...
         try {
@@ -257,7 +257,7 @@ class BootstrapController
                 $clspath = implode('/', $parts);
             }
 
-            $mw = $this->_loadClass($clspath, $name);
+            $mw = $this->_loadClass($name, $clspath);
             if ($mw !== null) {
                 $middlewares[] = $mw;
             }
@@ -317,14 +317,13 @@ class BootstrapController
     }
 
     /**
-     * Loads and returns an instance of $className
+     * Loads and returns an instance of $className with the given $classPath
      *
-     * @param  $classPath string The file path of the class
      * @param  $className string The class to be loaded
-     * @throws \Exception
-     * @return object            The instance of $className
+     * @param  $classPath string The optional file path of the class
+     * @return object|null       The instance of the class, or null if failed
      */
-    private function _loadClass($classPath, $className)
+    private function _loadClass($className, $classPath = '')
     {
         if (file_exists($classPath)) {
             require_once($classPath);
