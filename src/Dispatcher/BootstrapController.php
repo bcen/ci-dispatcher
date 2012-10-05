@@ -172,10 +172,9 @@ class BootstrapController extends \CI_Controller
         } else if ($response instanceof RawHtmlResponse) {
             $this->output->set_output($response->getContent());
         } else if ($response instanceof JsonResponse) {
-            $content = (is_array($response->getData())
-                       || is_object($response->getData()))
-                       ? json_encode($response->getData())
-                       : '';
+            $data = $response->getData();
+            $content = (is_array($data) || is_object($data))
+                        ? json_encode($data) : '';
             $this->output->set_output($content);
         }
     }
