@@ -198,7 +198,7 @@ class BootstrapController extends \CI_Controller
         }
 
         // Finally, let's load the class and dispatch it
-        $class = $this->_loadClass($classInfo->className,
+        $class = $this->loadClass($classInfo->className,
             $classInfo->classPath);
 
         // see what is the requested method, e.g. 'GET', 'POST' and etc...
@@ -255,7 +255,7 @@ class BootstrapController extends \CI_Controller
                 $clspath = implode('/', $parts);
             }
 
-            $mw = $this->_loadClass($name, $clspath);
+            $mw = $this->loadClass($name, $clspath);
             if ($mw !== null) {
                 $middlewares[] = $mw;
             }
@@ -283,7 +283,7 @@ class BootstrapController extends \CI_Controller
         // We always take the first element in `$routes`
         // and try to see if the file exists with the same name
         while ($r = array_shift($routes)) {
-            $path .= '/' . $r;
+            $path .= DIRECTORY_SEPARATOR . $r;
 
             if (is_file($path . EXT)) {
                 // if file exists,
@@ -300,13 +300,13 @@ class BootstrapController extends \CI_Controller
                 $underscored = preg_replace('/[\s]+/', '_', trim($huamnized));
 
                 $classInfo->className = $underscored;
-                $classInfo->classPath = $path.EXT;
+                $classInfo->classPath = $path . EXT;
                 $classInfo->params = $routes;
-            } else if (is_file($path.'/index'.EXT)) {
+            } else if (is_file($path . '/index' . EXT)) {
                 // see if we have an index.php in the mapped uri directory
                 $classInfo = new stdClass;
                 $classInfo->className = 'Index';
-                $classInfo->classPath = $path.'/index'.EXT;
+                $classInfo->classPath = $path . '/index' . EXT;
                 $classInfo->params = $routes;
             }
         }
@@ -323,7 +323,7 @@ class BootstrapController extends \CI_Controller
      * @param  $classPath string The optional file path of the class
      * @return object|null       The instance of the class, or null if failed
      */
-    private function _loadClass($className, $classPath = '')
+    protected function loadClass($className, $classPath = '')
     {
         if (file_exists($classPath)) {
             require_once($classPath);
