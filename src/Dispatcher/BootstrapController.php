@@ -172,24 +172,23 @@ class BootstrapController extends \CI_Controller
         } else if ($response instanceof RawHtmlResponse) {
             $this->output->set_output($response->getContent());
         } else if ($response instanceof JsonResponse) {
-            $content = (is_array($response->getData())
-                       || is_object($response->getData()))
-                       ? json_encode($response->getData())
-                       : '';
+            $data = $response->getData();
+            $content = (is_array($data) || is_object($data))
+                        ? json_encode($data) : '';
             $this->output->set_output($content);
         }
     }
 
     /**
      * Dispatches the incoming request to the proper resource.
-     * @param array $uri                    The incoming resource URI in array
+     * @param array                $uri     The incoming resource URI in array
      * @param HttpRequestInterface $request The incoming request object
      * @return \Dispatcher\HttpResponseInterface
      */
     protected function dispatch($uri, HttpRequestInterface $request)
     {
         // gets the class infomation that we will be dispatching to
-        $classInfo = $this->_getClassInfo($uri);
+        $classInfo = $this->loadClassInfoOn($uri);
 
         // 404 page if we cannot find any assocaited class info
         if ($classInfo === NULL) {
@@ -199,17 +198,15 @@ class BootstrapController extends \CI_Controller
         }
 
         // Finally, let's load the class and dispatch it
-        $class = $this->_loadClass($classInfo->className,
-            $classInfo->classPath);
+        $class = $this->loadClass($classInfo->getName(), $classInfo->getPath());
 
         // see what is the requested method, e.g. 'GET', 'POST' and etc...
         try {
-            $req_method = new ReflectionMethod(
-                $classInfo->className,
-                strtolower($request->getMethod()));
+            $reflectedMethod = new ReflectionMethod(
+                $classInfo->getName(), strtolower($request->getMethod()));
 
-            if (count($classInfo->params) >
-                count($req_method->getParameters()) - 1) {
+            if (count($classInfo->getParams()) >
+                count($reflectedMethod->getParameters()) - 1) {
                 log_message('debug', '404 due to not enough expected params');
                 return new Error404Response();
             }
@@ -222,7 +219,7 @@ class BootstrapController extends \CI_Controller
         // TODO: Maybe a DispatchableResource for RESTful API?
         if ($class instanceof DispatchableController) {
             $response = $this->_dispatchAsController(
-                $class, $classInfo, $request);
+                $class, $request, $classInfo->getParams());
         } else {
             $response = new Error404Response();
         }
@@ -256,7 +253,7 @@ class BootstrapController extends \CI_Controller
                 $clspath = implode('/', $parts);
             }
 
-            $mw = $this->_loadClass($name, $clspath);
+            $mw = $this->loadClass($name, $clspath);
             if ($mw !== null) {
                 $middlewares[] = $mw;
             }
@@ -265,17 +262,7 @@ class BootstrapController extends \CI_Controller
         return $middlewares;
     }
 
-    /**
-     * Gets the dispatched class information base on the incoming `$uri` array.
-     *
-     * `$classInfo` is a standard php object with 3 properties:
-     * - className
-     * - classPath
-     * - classParams
-     * @param  array    $routes The uri array
-     * @return stdClass         Class info
-     */
-    private function _getClassInfo($routes)
+    protected function loadClassInfoOn(array $routes)
     {
         $path = APPPATH . 'controllers'; // default path to look for the class
 
@@ -284,12 +271,11 @@ class BootstrapController extends \CI_Controller
         // We always take the first element in `$routes`
         // and try to see if the file exists with the same name
         while ($r = array_shift($routes)) {
-            $path .= '/' . $r;
+            $path .= DIRECTORY_SEPARATOR . $r;
 
             if (is_file($path . EXT)) {
                 // if file exists,
                 // we assume that the uri is mapped to this class
-                $classInfo = new stdClass;
 
 
                 // Taken from the inflector helper
@@ -297,18 +283,14 @@ class BootstrapController extends \CI_Controller
                 // camelized word with underscore
                 // e.g.  myname -> Myname, your_name -> Your_Name
                 $huamnized = ucwords(preg_replace(
-                                '/[_]+/', ' ', strtolower(trim($r))));
+                    '/[_]+/', ' ', strtolower(trim($r))));
                 $underscored = preg_replace('/[\s]+/', '_', trim($huamnized));
 
-                $classInfo->className = $underscored;
-                $classInfo->classPath = $path.EXT;
-                $classInfo->params = $routes;
-            } else if (is_file($path.'/index'.EXT)) {
+                $classInfo = new ClassInfo($underscored, $path . EXT, $routes);
+            } else if (is_file($path . '/index' . EXT)) {
                 // see if we have an index.php in the mapped uri directory
-                $classInfo = new stdClass;
-                $classInfo->className = 'Index';
-                $classInfo->classPath = $path.'/index'.EXT;
-                $classInfo->params = $routes;
+                $classInfo = new ClassInfo('Index', $path . '/index' . EXT,
+                    $routes);
             }
         }
 
@@ -324,7 +306,7 @@ class BootstrapController extends \CI_Controller
      * @param  $classPath string The optional file path of the class
      * @return object|null       The instance of the class, or null if failed
      */
-    private function _loadClass($className, $classPath = '')
+    protected function loadClass($className, $classPath = '')
     {
         if (file_exists($classPath)) {
             require_once($classPath);
@@ -363,10 +345,10 @@ class BootstrapController extends \CI_Controller
      * Dispatches the incoming `$request` by using `DispatchableController`.
      */
     private function _dispatchAsController(DispatchableController $class,
-                                           $classInfo,
-                                           HttpRequestInterface $request)
+                                           HttpRequestInterface $request,
+                                           array $params = array())
     {
-        array_unshift($classInfo->params, $request);
+        array_unshift($params, $request);
         if (!$this->_debug) {
             set_error_handler(function() {
                 throw new Exception('Hacky exception to hide the CI ' .
@@ -375,8 +357,7 @@ class BootstrapController extends \CI_Controller
             try {
                 // dispatch and get the response
                 $response = call_user_func_array(array(
-                        $class, $request->getMethod()),
-                    $classInfo->params);
+                        $class, $request->getMethod()), $params);
             } catch (Exception $ex) {
                 log_message('debug', '404 due to ' . $ex->getMessage());
                 return new Error404Response();
@@ -385,8 +366,7 @@ class BootstrapController extends \CI_Controller
         } else {
             // dispatch and get the response
             $response = call_user_func_array(array(
-                    $class, $request->getMethod()),
-                $classInfo->params);
+                    $class, $request->getMethod()), $params);
         }
 
         return $response;
