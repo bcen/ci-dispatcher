@@ -1,8 +1,6 @@
 <?php
 namespace Dispatcher\Tests;
 
-use Dispatcher\Tests\Stub\BootstrapControllerLoadMiddlewareSpy;
-use Dispatcher\Tests\Stub\BootstrapControllerDispatchSpy;
 use Dispatcher\JsonResponse;
 
 class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
