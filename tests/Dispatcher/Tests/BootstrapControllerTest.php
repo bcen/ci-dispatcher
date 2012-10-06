@@ -2,6 +2,8 @@
 namespace Dispatcher\Tests;
 
 use Dispatcher\Tests\Stub\BootstrapControllerLoadMiddlewareSpy;
+use Dispatcher\Tests\Stub\BootstrapControllerDispatchSpy;
+use Dispatcher\JsonResponse;
 
 class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 {
@@ -27,13 +29,36 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
 
-    public function test_loadMiddlewares_WithoutClasspath_ShouldBeCalled()
+    public function test_loadMiddleware_IncludesNamespace_ShouldCallLoadClass()
     {
-        $ctrl = new BootstrapControllerLoadMiddlewareSpy();
+        $ctrl = $this->getMock('Dispatcher\\BootstrapController',
+            array('dispatch', 'renderResponse', 'loadDispatcherConfig', 'loadClass'));
+
+        $ctrl->expects($this->once())
+            ->method('dispatch')
+            ->will($this->returnValue(JsonResponse::create()));
+
+        $ctrl->expects($this->once())
+            ->method('renderResponse')
+            ->will($this->returnValue(null));
+
+        $ctrl->expects($this->once())
+            ->method('loadDispatcherConfig')
+            ->will($this->returnValue(array(
+                'middlewares' => array(
+                    'Dispatcher\\Tests\Stub\\MiddlewareSpy'
+                ),
+                'debug' => false)));
+
+        $arg0Constrains = $this->logicalAnd(
+            $this->equalTo('Dispatcher\\Tests\Stub\\MiddlewareSpy'),
+            $this->classHasAttribute('processRequestCalled'),
+            $this->classHasAttribute('processResponseCalled'));
+
+        $ctrl->expects($this->once())
+            ->method('loadClass')
+            ->with($arg0Constrains, $this->isEmpty());
+
         $ctrl->_remap('method', array('api', 'v1', 'books'));
-        $this->assertEquals(1, count($ctrl->middlewares));
-        $mw = array_pop($ctrl->middlewares);
-        $this->assertTrue($mw->processRequestCalled);
-        $this->assertTrue($mw->processResponseCalled);
     }
 }

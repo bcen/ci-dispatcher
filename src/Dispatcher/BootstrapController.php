@@ -32,23 +32,6 @@ class BootstrapController extends \CI_Controller
     private $container;
 
     /**
-     * Creates a new instance of Dispatcher.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-
-        foreach ($this->loadDispatcherConfig() as $k => $v) {
-            if (property_exists($this, '_' . $k)) {
-                $this->{'_' . $k} = $v;
-            }
-        }
-
-        $this->container = $this->createContainer(
-            $this->loadDependenciesConfig());
-    }
-
-    /**
      * This will be called by CodeIgniter.php to remap to user defined function.
      * <i>Note: We'll use this to remap to our class-based controller.</i>
      *
@@ -59,6 +42,8 @@ class BootstrapController extends \CI_Controller
      */
     public function _remap($method, $uri)
     {
+        $this->initializeConfig();
+
         $request = $this->createHttpRequest();
 
         if (!$request instanceof HttpRequestInterface) {
@@ -83,6 +68,17 @@ class BootstrapController extends \CI_Controller
         }
 
         $this->renderResponse($request, $response);
+    }
+
+    protected function initializeConfig()
+    {
+        foreach ($this->loadDispatcherConfig() as $k => $v) {
+            if (property_exists($this, '_' . $k)) {
+                $this->{'_' . $k} = $v;
+            }
+        }
+        $this->container = $this->createContainer(
+            $this->loadDependenciesConfig());
     }
 
     /**
@@ -191,7 +187,7 @@ class BootstrapController extends \CI_Controller
         $classInfo = $this->loadClassInfoOn($uri);
 
         // 404 page if we cannot find any assocaited class info
-        if ($classInfo === NULL) {
+        if ($classInfo === null) {
             log_message('debug', '404 due to unknown classInfo for '.
                 implode(',', $request->getUriArray()));
             return new Error404Response();
