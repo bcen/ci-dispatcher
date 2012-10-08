@@ -83,4 +83,17 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
+
+    public function test_dispatch_OnNonexistentURI_ShouldReturnError404Response()
+    {
+        $ctrl = $this->getMock('Dispatcher\\BootstrapController',
+            array('renderResponse'));
+
+        $ctrl->expects($this->once())
+            ->method('renderResponse')
+            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
+                   $this->isInstanceOf('Dispatcher\\Error404Response'));
+
+        $ctrl->_remap('method', array('api', 'v1', 'books'));
+    }
 }
