@@ -4,7 +4,7 @@ namespace Dispatcher;
 /**
  * Base class of controller for Dispatcher.
  */
-abstract class DispatchableController
+abstract class DispatchableController implements DispatchableInterface
 {
     protected $views = '';
 
@@ -30,6 +30,52 @@ abstract class DispatchableController
             E_USER_NOTICE);
 
         return NULL;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function doDispatch(HttpRequestInterface $request,
+                               array $params = array(),
+                               $failSilent = false)
+    {
+        // see what is the requested method, e.g. 'GET', 'POST' and etc...
+        try {
+            $reflectedMethod = new \ReflectionMethod(
+                $this, strtolower($request->getMethod()));
+
+            if (count($params) >
+                count($reflectedMethod->getParameters()) - 1) {
+                log_message('debug', '404 due to not enough expected params');
+                return new Error404Response();
+            }
+        } catch (\ReflectionException $ex) {
+            log_message('error', 'Unable to reflect on method');
+            return new Error404Response();
+        }
+
+        array_unshift($params, $request);
+        if ($failSilent) {
+            set_error_handler(function() {
+                throw new \Exception('Hacky exception to hide the CI ' .
+                    'error handler message');
+            });
+            try {
+                // dispatch and get the response
+                $response = call_user_func_array(array(
+                    $this, strtolower($request->getMethod())), $params);
+            } catch (\Exception $ex) {
+                log_message('debug', '404 due to ' . $ex->getMessage());
+                return new Error404Response();
+            }
+            restore_error_handler();
+        } else {
+            // dispatch and get the response
+            $response = call_user_func_array(array(
+                $this, strtolower($request->getMethod())), $params);
+        }
+
+        return $response;
     }
 
     public function get(HttpRequestInterface $request)
