@@ -32,23 +32,6 @@ class BootstrapController extends \CI_Controller
     private $container;
 
     /**
-     * Creates a new instance of Dispatcher.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-
-        foreach ($this->loadDispatcherConfig() as $k => $v) {
-            if (property_exists($this, '_' . $k)) {
-                $this->{'_' . $k} = $v;
-            }
-        }
-
-        $this->container = $this->createContainer(
-            $this->loadDependenciesConfig());
-    }
-
-    /**
      * This will be called by CodeIgniter.php to remap to user defined function.
      * <i>Note: We'll use this to remap to our class-based controller.</i>
      *
@@ -59,6 +42,8 @@ class BootstrapController extends \CI_Controller
      */
     public function _remap($method, $uri)
     {
+        $this->initializeConfig();
+
         $request = $this->createHttpRequest();
 
         if (!$request instanceof HttpRequestInterface) {
@@ -83,6 +68,17 @@ class BootstrapController extends \CI_Controller
         }
 
         $this->renderResponse($request, $response);
+    }
+
+    protected function initializeConfig()
+    {
+        foreach ($this->loadDispatcherConfig() as $k => $v) {
+            if (property_exists($this, '_' . $k)) {
+                $this->{'_' . $k} = $v;
+            }
+        }
+        $this->container = $this->createContainer(
+            $this->loadDependenciesConfig());
     }
 
     /**
@@ -191,7 +187,7 @@ class BootstrapController extends \CI_Controller
         $classInfo = $this->loadClassInfoOn($uri);
 
         // 404 page if we cannot find any assocaited class info
-        if ($classInfo === NULL) {
+        if ($classInfo === null) {
             log_message('debug', '404 due to unknown classInfo for '.
                 implode(',', $request->getUriArray()));
             return new Error404Response();
@@ -200,31 +196,12 @@ class BootstrapController extends \CI_Controller
         // Finally, let's load the class and dispatch it
         $class = $this->loadClass($classInfo->getName(), $classInfo->getPath());
 
-        // see what is the requested method, e.g. 'GET', 'POST' and etc...
-        try {
-            $reflectedMethod = new ReflectionMethod(
-                $classInfo->getName(), strtolower($request->getMethod()));
-
-            if (count($classInfo->getParams()) >
-                count($reflectedMethod->getParameters()) - 1) {
-                log_message('debug', '404 due to not enough expected params');
-                return new Error404Response();
-            }
-        } catch (ReflectionException $ex) {
-            log_message('error', 'Unable to reflect on method');
+        if (!$class instanceof DispatchableInterface) {
             return new Error404Response();
         }
 
-
-        // TODO: Maybe a DispatchableResource for RESTful API?
-        if ($class instanceof DispatchableController) {
-            $response = $this->_dispatchAsController(
-                $class, $request, $classInfo->getParams());
-        } else {
-            $response = new Error404Response();
-        }
-
-        return $response;
+        return $class->doDispatch($request, $classInfo->getParams(),
+            !$this->_debug);
     }
 
     /**
@@ -339,43 +316,5 @@ class BootstrapController extends \CI_Controller
 
         $class = $clsReflect->newInstanceArgs($deps);
         return $class;
-    }
-
-    /**
-     * Dispatches the incoming `$request` by using `DispatchableController`.
-     */
-    private function _dispatchAsController(DispatchableController $class,
-                                           HttpRequestInterface $request,
-                                           array $params = array())
-    {
-        array_unshift($params, $request);
-        if (!$this->_debug) {
-            set_error_handler(function() {
-                throw new Exception('Hacky exception to hide the CI ' .
-                                    'error handler message');
-            });
-            try {
-                // dispatch and get the response
-                $response = call_user_func_array(array(
-                        $class, $request->getMethod()), $params);
-            } catch (Exception $ex) {
-                log_message('debug', '404 due to ' . $ex->getMessage());
-                return new Error404Response();
-            }
-            restore_error_handler();
-        } else {
-            // dispatch and get the response
-            $response = call_user_func_array(array(
-                    $class, $request->getMethod()), $params);
-        }
-
-        return $response;
-    }
-
-    private function _dispatchAsResource($class,
-                                         $classInfo,
-                                         HttpRequest $request)
-    {
-        // TODO: different way to dispatch restful resource
     }
 }

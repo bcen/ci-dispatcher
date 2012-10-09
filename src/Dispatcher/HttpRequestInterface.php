@@ -1,6 +1,9 @@
 <?php
 namespace Dispatcher;
 
+/**
+ * Interface for incoming HTTP request.
+ */
 interface HttpRequestInterface
 {
     /**
@@ -77,24 +80,70 @@ interface HttpRequestInterface
      */
     public function getParam($key, $default = null, $sanitize = false);
 
+    /**
+     * Retrieves the cookie value with the given $key.
+     * @param string $key     The name of the cookie
+     * @param mixed  $default The default value if cookie is not found
+     * @return mixed          Returns the value or null if cookie is not found
+     */
     public function getCookie($key, $default = null);
 
+    /**
+     * Retrieves the header value with the given $key.
+     * @param string $key     The name of the header
+     * @param mixed  $default The default value if header is not found
+     * @return mixed          Returns the value or null if header is not found
+     */
     public function getHeader($key, $default = null);
 
+    /**
+     * Retrieves value from $_SERVER with the given $key.
+     * @param string $key     The name of the param
+     * @param mixed  $default The default value for non-existent param
+     * @return mixed          Returns the value or null
+     */
     public function getServerParam($key, $default = null);
 
+    /**
+     * Gets the server shceme.
+     * @return string HTTP|HTTPS
+     */
     public function getScheme();
 
+    /**
+     * Gets the Content-Type header value.
+     * @return string
+     */
     public function getContentType();
 
+    /**
+     * Gets the client IP.
+     * @return string
+     */
     public function getIp();
 
+    /**
+     * Gets the client IPv4.
+     * @return string
+     */
     public function getIpv4();
 
+    /**
+     * Gets teh client IPv6.
+     * @return string
+     */
     public function getIpv6();
 
+    /**
+     * Gets the client host name.
+     * @return string
+     */
     public function getHostName();
 
+    /**
+     * Gets the client User-Agent header.
+     * @return string
+     */
     public function getUserAgent();
 
     public function getBaseUrl();

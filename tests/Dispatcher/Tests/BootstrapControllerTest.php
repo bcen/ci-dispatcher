@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Tests;
 
-use Dispatcher\Tests\Stub\BootstrapControllerLoadMiddlewareSpy;
+use Dispatcher\JsonResponse;
 
 class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 {
@@ -27,13 +27,117 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
 
-    public function test_loadMiddlewares_WithoutClasspath_ShouldBeCalled()
+    public function test_loadMiddleware_IncludesNamespace_ShouldCallLoadClass()
     {
-        $ctrl = new BootstrapControllerLoadMiddlewareSpy();
+        $ctrl = $this->getMock('Dispatcher\\BootstrapController',
+            array('dispatch', 'renderResponse',
+                'loadDispatcherConfig', 'loadClass'));
+
+        $ctrl->expects($this->once())
+            ->method('dispatch')
+            ->will($this->returnValue(JsonResponse::create()));
+
+        $ctrl->expects($this->once())
+            ->method('loadDispatcherConfig')
+            ->will($this->returnValue(array(
+                'middlewares' => array(
+                    'Dispatcher\\Tests\Stub\\MiddlewareSpy'
+                ),
+                'debug' => false)));
+
+        $arg0Constrains = $this->logicalAnd(
+            $this->equalTo('Dispatcher\\Tests\Stub\\MiddlewareSpy'),
+            $this->classHasAttribute('processRequestCalled'),
+            $this->classHasAttribute('processResponseCalled'));
+
+        $ctrl->expects($this->once())
+            ->method('loadClass')
+            ->with($arg0Constrains, $this->isEmpty());
+
         $ctrl->_remap('method', array('api', 'v1', 'books'));
-        $this->assertEquals(1, count($ctrl->middlewares));
-        $mw = array_pop($ctrl->middlewares);
-        $this->assertTrue($mw->processRequestCalled);
-        $this->assertTrue($mw->processResponseCalled);
+    }
+
+    public function test_loadMiddleware_WithoutNamespace_ShouldDefaultToMiddlewareDir()
+    {
+        $ctrl = $this->getMock('Dispatcher\\BootstrapController',
+            array('dispatch', 'renderResponse',
+                'loadDispatcherConfig', 'loadClass'));
+
+        $ctrl->expects($this->once())
+            ->method('dispatch')
+            ->will($this->returnValue(JsonResponse::create()));
+
+        $ctrl->expects($this->once())
+            ->method('loadDispatcherConfig')
+            ->will($this->returnValue(array(
+            'middlewares' => array(
+                'filters/debug_filter'
+            ),
+            'debug' => false)));
+
+        $ctrl->expects($this->once())
+            ->method('loadClass')
+            ->with($this->equalTo('Debug_Filter'),
+                   $this->equalTo(
+                       APPPATH . 'middlewares/filters/debug_filter.php'));
+
+        $ctrl->_remap('method', array('api', 'v1', 'books'));
+    }
+
+    public function test_dispatch_OnNonexistentURI_ShouldReturnError404Response()
+    {
+        $ctrl = $this->getMock('Dispatcher\\BootstrapController',
+            array('renderResponse'));
+
+        $ctrl->expects($this->once())
+            ->method('renderResponse')
+            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
+                   $this->isInstanceOf('Dispatcher\\Error404Response'));
+
+        $ctrl->_remap('method', array('api', 'v1', 'books'));
+    }
+
+    public function test_dispatch_OnExistentURI_ShouldReturnNormalResponse()
+    {
+        $reqMock = $this->getMock('Dispatcher\\HttpRequest', array('getMethod'));
+        $reqMock->expects($this->any())
+            ->method('getMethod')
+            ->will($this->returnValue('GET'));
+
+        $dispatchableController = $this->getMockForAbstractClass(
+            'Dispatcher\\DispatchableController',
+            array(),
+            '',
+            true,
+            true,
+            true,
+            array('getViews'));
+        $dispatchableController->expects($this->once())
+            ->method('getViews')
+            ->will($this->returnValue(array('index')));
+
+
+        $ctrl = $this->getMock('Dispatcher\\BootstrapController',
+            array('renderResponse', 'loadClassInfoOn',
+                  'loadClass', 'createHttpRequest'));
+
+        $ctrl->expects($this->once())
+            ->method('renderResponse')
+            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
+                   $this->isInstanceOf('Dispatcher\\ViewTemplateResponse'));
+
+        $ctrl->expects($this->once())
+            ->method('createHttpRequest')
+            ->will($this->returnValue($reqMock));
+
+        $ctrl->expects($this->once())
+            ->method('loadClassInfoOn')
+            ->will($this->returnValue(new \Dispatcher\ClassInfo('Books', '')));
+
+        $ctrl->expects($this->once())
+            ->method('loadClass')
+            ->will($this->returnValue($dispatchableController));
+
+        $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
 }
