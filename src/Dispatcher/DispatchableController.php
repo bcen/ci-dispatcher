@@ -41,7 +41,7 @@ abstract class DispatchableController implements DispatchableInterface
     {
         // see what is the requested method, e.g. 'GET', 'POST' and etc...
         try {
-            $reflectedMethod = new ReflectionMethod(
+            $reflectedMethod = new \ReflectionMethod(
                 $this, strtolower($request->getMethod()));
 
             if (count($params) >
@@ -49,7 +49,7 @@ abstract class DispatchableController implements DispatchableInterface
                 log_message('debug', '404 due to not enough expected params');
                 return new Error404Response();
             }
-        } catch (ReflectionException $ex) {
+        } catch (\ReflectionException $ex) {
             log_message('error', 'Unable to reflect on method');
             return new Error404Response();
         }
