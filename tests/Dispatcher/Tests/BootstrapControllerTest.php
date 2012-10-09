@@ -96,4 +96,48 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
+
+    public function test_dispatch_OnExistentURI_ShouldReturnNormalResponse()
+    {
+        $reqMock = $this->getMock('Dispatcher\\HttpRequest', array('getMethod'));
+        $reqMock->expects($this->any())
+            ->method('getMethod')
+            ->will($this->returnValue('GET'));
+
+        $dispatchableController = $this->getMockForAbstractClass(
+            'Dispatcher\\DispatchableController',
+            array(),
+            '',
+            true,
+            true,
+            true,
+            array('getViews'));
+        $dispatchableController->expects($this->once())
+            ->method('getViews')
+            ->will($this->returnValue(array('index')));
+
+
+        $ctrl = $this->getMock('Dispatcher\\BootstrapController',
+            array('renderResponse', 'loadClassInfoOn',
+                  'loadClass', 'createHttpRequest'));
+
+        $ctrl->expects($this->once())
+            ->method('renderResponse')
+            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
+                   $this->isInstanceOf('Dispatcher\\ViewTemplateResponse'));
+
+        $ctrl->expects($this->once())
+            ->method('createHttpRequest')
+            ->will($this->returnValue($reqMock));
+
+        $ctrl->expects($this->once())
+            ->method('loadClassInfoOn')
+            ->will($this->returnValue(new \Dispatcher\ClassInfo('Books', '')));
+
+        $ctrl->expects($this->once())
+            ->method('loadClass')
+            ->will($this->returnValue($dispatchableController));
+
+        $ctrl->_remap('method', array('api', 'v1', 'books'));
+    }
 }
