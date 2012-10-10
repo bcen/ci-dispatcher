@@ -35,6 +35,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
     /**
      * @test
+     * @expectedException ReflectionException
      */
     public function doDispatch_OnInvalidRequestMethod_ShouldReturnError404()
     {
@@ -56,8 +57,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
             ->method('getViews')
             ->will($this->returnValue(array('index')));
 
-        $response = $controller->doDispatch($request, array(), true);
-        $this->assertEquals(404, $response->getStatusCode());
+        $controller->doDispatch($request, array(), true);
     }
 
     /**

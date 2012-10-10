@@ -177,8 +177,10 @@ class BootstrapController extends \CI_Controller
 
     /**
      * Dispatches the incoming request to the proper resource.
+     * <i>Note: Resource must implement {@link \Dispatcher\DispatchableInterface}</i>
      * @param array                $uri     The incoming resource URI in array
      * @param HttpRequestInterface $request The incoming request object
+     * @throws \Exception
      * @return \Dispatcher\HttpResponseInterface
      */
     protected function dispatch($uri, HttpRequestInterface $request)
@@ -201,8 +203,24 @@ class BootstrapController extends \CI_Controller
             return new Error404Response();
         }
 
-        return $controller->doDispatch($request, $classInfo->getParams(),
-            !$this->_debug);
+        if (!$this->_debug) {
+            set_error_handler(function() {
+                throw new Exception();
+            });
+            try {
+                $response = $controller->doDispatch($request,
+                    $classInfo->getParams());
+            } catch (\Exception $ex) {
+                log_message('error', '');
+                return new Error404Response();
+            }
+            restore_error_handler();
+        } else {
+            $response = $controller->doDispatch($request,
+                $classInfo->getParams());
+        }
+
+        return $response;
     }
 
     /**
