@@ -110,7 +110,7 @@ class BootstrapController extends \CI_Controller
     {
         static $request = null;
         if ($request === null) {
-            $request = new HttpRequest();
+            $request = new HttpRequest(get_instance());
             $this->_container['request'] = $request;
         }
         return $request;
@@ -332,6 +332,9 @@ class BootstrapController extends \CI_Controller
         }
 
         $class = $clsReflect->newInstanceArgs($deps);
+        if ($class instanceof CodeIgniterAware) {
+            $class->setCI(get_instance());
+        }
         return $class;
     }
 }
