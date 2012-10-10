@@ -4,12 +4,14 @@ namespace Dispatcher;
 /**
  * Simple wrapper around CodeIgniter's Input class
  */
-class HttpRequest implements HttpRequestInterface
+class HttpRequest implements HttpRequestInterface, CodeIgniterAware
 {
     private $_id;
+    private $_CI;
 
-    public function __construct()
+    public function __construct($CI)
     {
+        $this->setCI($CI);
         $this->_id = md5(uniqid($this->getUri() . $this->getIp()));
     }
 
@@ -154,6 +156,11 @@ class HttpRequest implements HttpRequestInterface
         return $this->_ci()->session;
     }
 
+    public function setCI($ci)
+    {
+        $this->_CI = $ci;
+    }
+
     private function _fetch($value, $default)
     {
         return $value !== FALSE ? $value : $default;
@@ -161,6 +168,6 @@ class HttpRequest implements HttpRequestInterface
 
     private function _ci()
     {
-        return get_instance();
+        return $this->_CI;
     }
 }

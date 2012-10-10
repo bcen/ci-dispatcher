@@ -10,7 +10,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
 
     public function setUp()
     {
-        $this->request = new \Dispatcher\HttpRequest();
+        $this->request = new \Dispatcher\HttpRequest(get_instance());
         if ($this->request === NULL) {
             $this->fail();
         }

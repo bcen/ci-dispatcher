@@ -40,7 +40,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
     public function doDispatch_OnInvalidRequestMethod_ShouldReturnError404()
     {
         $request = $this->getMock('Dispatcher\\HttpRequest',
-            array('getMethod'));
+            array('getMethod'), array(get_instance()));
         $request->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue('POST'));
@@ -66,7 +66,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
     public function doDispatch_OnValidRequestMethod_ShouldReturnValidResponse()
     {
         $request = $this->getMock('Dispatcher\\HttpRequest',
-            array('getMethod'));
+            array('getMethod'), array(get_instance()));
         $request->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue('GET'));
