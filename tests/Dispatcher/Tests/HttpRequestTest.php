@@ -16,17 +16,26 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
         }
     }
 
-    public function test_isCli_InUnitTest_ShouldReturnTrue()
+    /**
+     * @test
+     */
+    public function isCli_InUnitTest_ShouldReturnTrue()
     {
         $this->assertTrue($this->request->isCli());
     }
 
-    public function test_isAjax_InUnitTest_ShouldReturnFalse()
+    /**
+     * @test
+     */
+    public function isAjax_InUnitTest_ShouldReturnFalse()
     {
         $this->assertFalse($this->request->isAjax());
     }
 
-    public function test_getId_MultipleCall_ShouldReturnSameId()
+    /**
+     * @test
+     */
+    public function getId_WithMultipleCall_ShouldReturnSameId()
     {
         $id = $this->request->getId();
 
@@ -34,63 +43,97 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
         $this->assertEquals($id, $another);
     }
 
-    public function test_getIp_OnInvalidHost_ShouldNotBeEmpty()
+    /**
+     * @test
+     */
+    public function getIp_OnInvalidHost_ShouldNotBeEmpty()
     {
         $this->assertNotEmpty($this->request->getIp());
     }
 
-    public function test_GET_FromSuperGlobal_ShouldBeEqual()
+    /**
+     * @test
+     */
+    public function GET_FromSuperGlobal_ShouldBeEqual()
     {
         $_GET['var1'] = 'var1';
         $this->assertEquals($_GET['var1'], $this->request->GET('var1'));
     }
 
-    public function test_GET_OnInvalidKey_ShouldReturnDefaultValue()
+    /**
+     * @test
+     */
+    public function GET_OnInvalidKey_ShouldReturnDefaultValue()
     {
+        $defaultValue = 'asdf';
         $_GET['key'] = 'value';
-        $this->assertEquals('default',
-            $this->request->GET('invalidKey', 'default'));
+
+        $this->assertEquals($defaultValue,
+            $this->request->GET('invalidKey', $defaultValue));
     }
 
-    public function test_POST_FromSuperGlobal_ShouldBeEqual()
+    /**
+     * @test
+     */
+    public function POST_FromSuperGlobal_ShouldBeEqual()
     {
         $_POST['var1'] = 'var1';
         $this->assertEquals($_POST['var1'], $this->request->POST('var1'));
     }
 
-    public function test_POST_OnInvalidKey_ShouldReturnDefaultValue()
+    /**
+     * @test
+     */
+    public function POST_OnInvalidKey_ShouldReturnDefaultValue()
     {
+        $defaultValue = 'somevalue';
         $_POST['key'] = 'value';
-        $this->assertEquals('default',
-            $this->request->POST('invalidKey', 'default'));
+        $this->assertEquals($defaultValue,
+            $this->request->POST('invalidKey', $defaultValue));
     }
 
-    public function test_getParam_FromSuperGlobal_ShouldHavePostPrecedence()
+    /**
+     * @test
+     */
+    public function getParam_FromSuperGlobal_ShouldHavePostPrecedence()
     {
+        $expected = '2';
         $_GET['var1'] = '1';
-        $_POST['var1'] = '2';
-        $this->assertEquals('2', $this->request->getParam('var1'));
+        $_POST['var1'] = $expected;
+        $this->assertEquals($expected, $this->request->getParam('var1'));
     }
 
-    public function test_getParam_WithSanitizeOnAmpersand_ShouldAppendSemiColon()
+    /**
+     * @test
+     */
+    public function getParam_WithSanitizeOnAmpersand_ShouldAppendSemiColon()
     {
         $_POST['key'] = '&thiswilldo';
         $this->assertEquals('&thiswilldo;',
-            $this->request->getParam('key', NULL, TRUE));
+            $this->request->getParam('key', null, true));
     }
 
-    public function test_getScheme_InUnitTest_ShouldReturnHttp()
+    /**
+     * @test
+     */
+    public function getScheme_InUnitTest_ShouldReturnHttp()
     {
         $this->assertEquals('HTTP', $this->request->getScheme());
     }
 
-    public function test_getCookie_FromSuperGlobal_ShouldBeEqual()
+    /**
+     * @test
+     */
+    public function getCookie_FromSuperGlobal_ShouldBeEqual()
     {
         $_COOKIE['somecookie'] = 'value';
         $this->assertEquals('value', $this->request->getCookie('somecookie'));
     }
 
-    public function test_getUserAgent_InUnitTest_ShouldBeEmpty()
+    /**
+     * @test
+     */
+    public function getUserAgent_InUnitTest_ShouldBeEmpty()
     {
         $this->assertEquals('', $this->request->getUserAgent());
     }
