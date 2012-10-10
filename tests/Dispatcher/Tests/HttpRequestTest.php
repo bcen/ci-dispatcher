@@ -137,4 +137,21 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     {
         $this->assertEquals('', $this->request->getUserAgent());
     }
+
+    /**
+     * @test
+     */
+    public function getUri_InUnitTest_ShouldBeEmpty()
+    {
+        $this->assertEmpty($this->request->getUri());
+    }
+
+    /**
+     * @test
+     */
+    public function getBaseUrl_InUnitTest_ShouldDefaultToLocalHost()
+    {
+
+        $this->assertEquals('http://localhost/', $this->request->getBaseUrl());
+    }
 }
