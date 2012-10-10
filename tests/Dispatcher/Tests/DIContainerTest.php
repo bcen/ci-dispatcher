@@ -45,7 +45,10 @@ class DIContainerTest extends \PHPUnit_Framework_Testcase
         }
     }
 
-    public function test_containerOffsetGet_MultipleCallToSharedObjectWithSameKey_ShouldReturnSameObjectHash()
+    /**
+     * @test
+     */
+    public function containerOffsetGet_MultipleCallToSharedObjectWithSameKey_ShouldReturnSameObjectHash()
     {
         $sharedObj = $this->container['sharedObj'];
         $this->assertEquals($this->sharedObjHash, spl_object_hash($sharedObj));
