@@ -6,4 +6,7 @@ namespace Dispatcher;
  */
 class ViewTemplateResponse extends HttpResponse
 {
+    public function render(HttpRequestInterface $request)
+    {
+    }
 }

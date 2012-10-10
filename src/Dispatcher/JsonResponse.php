@@ -10,4 +10,8 @@ class JsonResponse extends HttpResponse
         parent::__construct($statusCode, $content, $headers);
         $this->setContentType('application/json');
     }
+
+    public function render(HttpRequestInterface $request)
+    {
+    }
 }

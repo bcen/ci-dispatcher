@@ -16,4 +16,8 @@ final class Error404Response extends HttpResponse
     {
         parent::__construct($statusCode, $content, $headers);
     }
+
+    public function render(HttpRequestInterface $request)
+    {
+    }
 }

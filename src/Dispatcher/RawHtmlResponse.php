@@ -6,4 +6,7 @@ namespace Dispatcher;
  */
 class RawHtmlResponse extends HttpResponse
 {
+    public function render(HttpRequestInterface $request)
+    {
+    }
 }

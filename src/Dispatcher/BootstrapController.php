@@ -147,31 +147,33 @@ class BootstrapController extends \CI_Controller
     protected function renderResponse(HttpRequestInterface $request,
                                       HttpResponseInterface $response)
     {
-        $this->output->set_content_type($response->getContentType());
+//        $this->output->set_content_type($response->getContentType());
+//
+//        foreach ($response->getHeaders() as $k => $v) {
+//            $this->output->set_header($k . ': ' . $v);
+//        }
+//
+//        if ($response->getStatusCode() !== 200) {
+//            $this->output->set_status_header($response->getStatusCode());
+//        }
+//
+//        // TODO: respect to the `Accept` header?
+//        if ($response instanceof Error404Response) {
+//            show_404();
+//        } else if ($response instanceof ViewTemplateResponse) {
+//            foreach ($response->getViews() as $v) {
+//                $this->load->view($v, $response->getData());
+//            }
+//        } else if ($response instanceof RawHtmlResponse) {
+//            $this->output->set_output($response->getContent());
+//        } else if ($response instanceof JsonResponse) {
+//            $data = $response->getData();
+//            $content = (is_array($data) || is_object($data))
+//                        ? json_encode($data) : '';
+//            $this->output->set_output($content);
+//        }
 
-        foreach ($response->getHeaders() as $k => $v) {
-            $this->output->set_header($k . ': ' . $v);
-        }
-
-        if ($response->getStatusCode() !== 200) {
-            $this->output->set_status_header($response->getStatusCode());
-        }
-
-        // TODO: respect to the `Accept` header?
-        if ($response instanceof Error404Response) {
-            show_404();
-        } else if ($response instanceof ViewTemplateResponse) {
-            foreach ($response->getViews() as $v) {
-                $this->load->view($v, $response->getData());
-            }
-        } else if ($response instanceof RawHtmlResponse) {
-            $this->output->set_output($response->getContent());
-        } else if ($response instanceof JsonResponse) {
-            $data = $response->getData();
-            $content = (is_array($data) || is_object($data))
-                        ? json_encode($data) : '';
-            $this->output->set_output($content);
-        }
+        $response->render($request);
     }
 
     /**

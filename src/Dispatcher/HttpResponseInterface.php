@@ -30,4 +30,6 @@ interface HttpResponseInterface
     public function getHeaders();
 
     public function setHeaders(array $headers);
+
+    public function render(HttpRequestInterface $request);
 }
