@@ -5,11 +5,24 @@ use Dispatcher\JsonResponse;
 
 class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 {
+    public function getUri()
+    {
+        return array(
+            array('method', array('api', 'v1', 'books')),
+            array('method', array('api', 'v1')),
+            array('method', array())
+        );
+    }
+
     /**
      * @test
+     * @dataProvider getUri
      */
-    public function _remap_OnAnyUri_ShouldCallRenderResponseWithRequestAndResponse()
+    public function _remap_OnAnyUri_ShouldCallRenderResponseWithRequestAndResponse($method, $uri)
     {
+        $completeUri = $uri;
+        array_unshift($completeUri, $method);
+
         // setup mock
         $controller = $this->getMock('Dispatcher\\BootstrapController',
             array('loadMiddlewares', 'dispatch', 'renderResponse'));
@@ -18,10 +31,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue(array()));
         $controller->expects($this->any())
             ->method('dispatch')
-            ->with($this->logicalOr(
-                $this->equalTo(array('method', 'api', 'v1', 'books')),
-                $this->equalTo(array('method', 'index')),
-                $this->equalTo(array('method'))))
+            ->with($this->equalTo($completeUri))
             ->will($this->returnValue(\Dispatcher\JsonResponse::create()));
         $controller->expects($this->any())
             ->method('renderResponse')
@@ -29,9 +39,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
                    $this->isInstanceOf('Dispatcher\\HttpResponseInterface'));
 
         // run
-        $controller->_remap('method', array('api', 'v1', 'books'));
-        $controller->_remap('method', array('index'));
-        $controller->_remap('method', array());
+        $controller->_remap($method, $uri);
     }
 
     /**
