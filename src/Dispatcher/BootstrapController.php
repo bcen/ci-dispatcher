@@ -29,7 +29,7 @@ class BootstrapController extends \CI_Controller
      * Dependency injection container (IoC)
      * @var DIContainer
      */
-    private $container;
+    private $_container;
 
     /**
      * This will be called by CodeIgniter.php to remap to user defined function.
@@ -45,10 +45,9 @@ class BootstrapController extends \CI_Controller
         $this->initializeConfig();
 
         $request = $this->createHttpRequest();
-
         if (!$request instanceof HttpRequestInterface) {
             throw new \Exception(
-                'object must implements \Dispatcher\HttpRequestInterface');
+                'Object must implements \Dispatcher\HttpRequestInterface');
         }
 
         $middlewares = $this->loadMiddlewares();
@@ -72,12 +71,12 @@ class BootstrapController extends \CI_Controller
 
     protected function initializeConfig()
     {
-        foreach ($this->loadDispatcherConfig() as $k => $v) {
-            if (property_exists($this, '_' . $k)) {
-                $this->{'_' . $k} = $v;
-            }
-        }
-        $this->container = $this->createContainer(
+        $config = $this->loadDispatcherConfig();
+        $this->_middlewares = isset($config['middlewares'])
+            ? $config['middlewares'] : array();
+        $this->_debug = isset($config['debug']) ? $config['debug'] : false;
+
+        $this->_container = $this->createContainer(
             $this->loadDependenciesConfig());
     }
 
@@ -88,7 +87,7 @@ class BootstrapController extends \CI_Controller
     protected function loadDispatcherConfig()
     {
         $config = array();
-        require(APPPATH . 'config/dispatcher.php');
+        require APPPATH . 'config/dispatcher.php';
         return $config;
     }
 
@@ -99,7 +98,7 @@ class BootstrapController extends \CI_Controller
     protected function loadDependenciesConfig()
     {
         $config = array();
-        require(APPPATH . 'config/dependencies.php');
+        require APPPATH . 'config/dependencies.php';
         return $config;
     }
 
@@ -109,10 +108,10 @@ class BootstrapController extends \CI_Controller
      */
     protected function createHttpRequest()
     {
-        static $request = NULL;
-        if ($request === NULL) {
+        static $request = null;
+        if ($request === null) {
             $request = new HttpRequest();
-            $this->container['request'] = $request;
+            $this->_container['request'] = $request;
         }
         return $request;
     }
@@ -196,8 +195,7 @@ class BootstrapController extends \CI_Controller
         }
 
         // Finally, let's load the class and dispatch it
-        $controller = $this->loadClass($classInfo->getName(),
-            $classInfo->getPath());
+        $controller = $this->loadClass($classInfo);
 
         if (!$controller instanceof DispatchableInterface) {
             return new Error404Response();
@@ -231,9 +229,10 @@ class BootstrapController extends \CI_Controller
     {
         $middlewares = array();
         foreach ($this->_middlewares as $name) {
-            $mw = NULL;
+            $mw = null;
+            $classInfo = null;
             if (class_exists($name)) {
-                $clspath = '';
+                $classInfo = new ClassInfo($name, '');
             } else {
                 $paths = explode('/', $name);
                 $name = array_pop($paths);
@@ -246,10 +245,10 @@ class BootstrapController extends \CI_Controller
                     $paths,
                     array(strtolower($name).EXT)
                 );
-                $clspath = implode('/', $parts);
+                $classInfo = new ClassInfo($name, implode('/', $parts));
             }
 
-            $mw = $this->loadClass($name, $clspath);
+            $mw = $this->loadClass($classInfo);
             if ($mw !== null) {
                 $middlewares[] = $mw;
             }
@@ -298,21 +297,20 @@ class BootstrapController extends \CI_Controller
      * <i>Note: The default implementation uses Reflection to inject
      * dependencies into constructor from the dependencies config.</i>
      *
-     * @param  $className string The class to be loaded
-     * @param  $classPath string The optional file path of the class
-     * @return object|null       The instance of the class, or null if failed
+     * @param \Dispatcher\ClassInfo $classInfo
+     * @return mixed The instance of the class, or null if failed
      */
-    protected function loadClass($className, $classPath = '')
+    protected function loadClass(ClassInfo $classInfo)
     {
-        if (file_exists($classPath)) {
-            require_once($classPath);
+        if (file_exists($classInfo->getPath())) {
+            require_once $classInfo->getPath();
         }
 
-        if (!class_exists($className)) {
-            return NULL;
+        if (!class_exists($classInfo->getName())) {
+            return null;
         }
 
-        $clsReflect = new ReflectionClass($className);
+        $clsReflect = new ReflectionClass($classInfo->getName());
         $ctor = $clsReflect->getConstructor();
 
         // if constructor found, get all the parameters
@@ -327,7 +325,7 @@ class BootstrapController extends \CI_Controller
             $depName = $param->getName();
 
             try {
-                $deps[] = $this->container[$param->getName()];
+                $deps[] = $this->_container[$param->getName()];
             } catch (\InvalidArgumentException $ex) {
                 die("$depName is not found in your dependencies.php");
             }

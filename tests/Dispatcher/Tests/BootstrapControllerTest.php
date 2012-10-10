@@ -63,14 +63,14 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
                 ),
                 'debug' => false)));
 
-        $arg0Constrains = $this->logicalAnd(
-            $this->equalTo('Dispatcher\\Tests\Stub\\MiddlewareSpy'),
-            $this->classHasAttribute('processRequestCalled'),
-            $this->classHasAttribute('processResponseCalled'));
-
+        $constraints = $this->logicalAnd(
+            $this->isInstanceOf('Dispatcher\\ClassInfo'),
+            $this->attributeEqualTo('name',
+                                    'Dispatcher\\Tests\Stub\\MiddlewareSpy'),
+            $this->attributeEqualTo('path', ''));
         $ctrl->expects($this->once())
             ->method('loadClass')
-            ->with($arg0Constrains, $this->isEmpty());
+            ->with($constraints);
 
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
@@ -96,11 +96,14 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
             ),
             'debug' => false)));
 
+        $constraints = $this->logicalAnd(
+            $this->isInstanceOf('Dispatcher\\ClassInfo'),
+            $this->attributeEqualTo('name', 'Debug_Filter'),
+            $this->attributeEqualTo('path',
+                APPPATH . 'middlewares/filters/debug_filter.php'));
         $ctrl->expects($this->once())
             ->method('loadClass')
-            ->with($this->equalTo('Debug_Filter'),
-                   $this->equalTo(
-                       APPPATH . 'middlewares/filters/debug_filter.php'));
+            ->with($constraints);
 
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
