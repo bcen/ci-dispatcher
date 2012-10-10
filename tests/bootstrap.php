@@ -1,6 +1,7 @@
 <?php
 
-require realpath(__DIR__ . '/../vendor/autoload.php');
+$autoloader = require realpath(__DIR__ . '/../vendor/autoload.php');
+$autoloader->add('Dispatcher\\Tests', __DIR__);
 $CI_DIR = realpath(__DIR__ . '/../vendor/ellislab/codeigniter');
 
 //// Starts of the Codeigniter index.php ////
