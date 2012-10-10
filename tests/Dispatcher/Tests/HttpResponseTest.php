@@ -1,6 +1,8 @@
 <?php
 namespace Dispatcher\Tests;
 
+use stdClass;
+
 use Dispatcher\ViewTemplateResponse;
 use Dispatcher\JsonResponse;
 use Dispatcher\Error404Response;
@@ -8,39 +10,33 @@ use Dispatcher\Error404Response;
 class HttpResponseTest extends \PHPUnit_Framework_Testcase
 {
     /**
-     * @var \Dispatcher\HttpResponseInterface
+     * @test
      */
-    private $vtResponse;
-
-    public function setUp()
+    public function getContentType_OnDefaultViewTemplate_ShouldReturn200StatusCode()
     {
-        $this->vtResponse = new ViewTemplateResponse();
-
-        if ($this->vtResponse === NULL) {
-            $this->fail();
-        }
+        $response = ViewTemplateResponse::create();
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function test_getContentType_OnViewTemplateDefault_ShouldReturn200StatusCode()
+    /**
+     * @test
+     */
+    public function setData_FromArray_ShouldReturnSameObjectHash()
     {
-        $this->assertEquals('text/html', $this->vtResponse->getContentType());
-        $this->assertEquals(200, $this->vtResponse->getStatusCode());
-    }
-
-    public function testJsonResponse()
-    {
-        $obj = new \stdClass();
+        $obj = new stdClass();
         $objHash = spl_object_hash($obj);
+
         $response = JsonResponse::create()->setData(array('obj' => $obj));
         $data = $response->getData();
-        $this->assertEquals($objHash, spl_object_hash($data['obj']));
-        $this->assertEquals('application/json', $response->getContentType());
 
+        $this->assertEquals($objHash, spl_object_hash($data['obj']));
         $response->setData(NULL);
-        $this->assertNull($response->getData());
     }
 
-    public function testErrorResponse()
+    /**
+     * @test
+     */
+    public function Error404Response_OnDefault_ShouldReturn404StatusCode()
     {
         $response = new Error404Response();
         $this->assertEquals(404, $response->getStatusCode());
