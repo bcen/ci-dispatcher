@@ -5,29 +5,39 @@ use Dispatcher\JsonResponse;
 
 class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 {
-    public function test__remap_OnNormalControlFlow_ShouldPass()
+    /**
+     * @test
+     */
+    public function _remap_OnAnyUri_ShouldCallRenderResponseWithRequestAndResponse()
     {
-        $ctrl = $this->getMock('Dispatcher\\BootstrapController',
+        // setup mock
+        $controller = $this->getMock('Dispatcher\\BootstrapController',
             array('loadMiddlewares', 'dispatch', 'renderResponse'));
-
-        $ctrl->expects($this->once())
+        $controller->expects($this->any())
             ->method('loadMiddlewares')
             ->will($this->returnValue(array()));
-
-        $ctrl->expects($this->once())
+        $controller->expects($this->any())
             ->method('dispatch')
-            ->with($this->equalTo(array('method', 'api', 'v1', 'books')))
+            ->with($this->logicalOr(
+                $this->equalTo(array('method', 'api', 'v1', 'books')),
+                $this->equalTo(array('method', 'index')),
+                $this->equalTo(array('method'))))
             ->will($this->returnValue(\Dispatcher\JsonResponse::create()));
-
-        $ctrl->expects($this->once())
+        $controller->expects($this->any())
             ->method('renderResponse')
             ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
                    $this->isInstanceOf('Dispatcher\\HttpResponseInterface'));
 
-        $ctrl->_remap('method', array('api', 'v1', 'books'));
+        // run
+        $controller->_remap('method', array('api', 'v1', 'books'));
+        $controller->_remap('method', array('index'));
+        $controller->_remap('method', array());
     }
 
-    public function test_loadMiddleware_IncludesNamespace_ShouldCallLoadClass()
+    /**
+     * @test
+     */
+    public function loadMiddleware_IncludesNamespace_ShouldCallLoadClass()
     {
         $ctrl = $this->getMock('Dispatcher\\BootstrapController',
             array('dispatch', 'renderResponse',
@@ -57,7 +67,10 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
 
-    public function test_loadMiddleware_WithoutNamespace_ShouldDefaultToMiddlewareDir()
+    /**
+     * @test
+     */
+    public function loadMiddleware_WithoutNamespace_ShouldDefaultToMiddlewareDir()
     {
         $ctrl = $this->getMock('Dispatcher\\BootstrapController',
             array('dispatch', 'renderResponse',
@@ -84,7 +97,10 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
 
-    public function test_dispatch_OnNonexistentURI_ShouldReturnError404Response()
+    /**
+     * @test
+     */
+    public function dispatch_OnNonexistentURI_ShouldReturnError404Response()
     {
         $ctrl = $this->getMock('Dispatcher\\BootstrapController',
             array('renderResponse'));
@@ -97,7 +113,10 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
 
-    public function test_dispatch_OnExistentURI_ShouldReturnNormalResponse()
+    /**
+     * @test
+     */
+    public function dispatch_OnExistentURI_ShouldReturnNormalResponse()
     {
         $reqMock = $this->getMock('Dispatcher\\HttpRequest', array('getMethod'));
         $reqMock->expects($this->any())
