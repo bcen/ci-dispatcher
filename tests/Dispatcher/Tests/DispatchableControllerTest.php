@@ -4,40 +4,47 @@ namespace Dispatcher\Tests;
 class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 {
     /**
-     * @var \Dispatcher\DispatchableController
+     * @test
      */
-    private $controller;
-
-    public function test_GET_OnRequest_ShouldReturn200ResponseWithIndexViews()
+    public function GET_WithIndexViewAndData_ShouldReturnViewTemplateResponse()
     {
         $requestMock = $this->getMock('Dispatcher\\HttpRequestInterface');
-        $ctrl = $this->getMockForAbstractClass(
+
+        $controller = $this->getMockForAbstractClass(
             'Dispatcher\\DispatchableController',
             array(),
             '',
             true,
             true,
             true,
-            array('getViews'));
-        $ctrl->expects($this->once())
+            array('getViews', 'getContextData'));
+        $controller->expects($this->once())
             ->method('getViews')
             ->will($this->returnValue(array('index')));
+        $controller->expects($this->once())
+            ->method('getContextData')
+            ->will($this->returnValue(array('message' => 'Hey')));
 
-        $response = $ctrl->get($requestMock);
+        $response = $controller->get($requestMock);
 
+        $this->assertInstanceOf('Dispatcher\\ViewTemplateResponse', $response);
         $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(array('message' => 'Hey'), $response->getData());
         $this->assertContains('index', $response->getViews());
     }
 
-    public function test_doDispatch_OnInvalidRequestMethod_ShouldReturnError404()
+    /**
+     * @test
+     */
+    public function doDispatch_OnInvalidRequestMethod_ShouldReturnError404()
     {
-        $requestMock = $this->getMock('Dispatcher\\HttpRequest',
+        $request = $this->getMock('Dispatcher\\HttpRequest',
             array('getMethod'));
-        $requestMock->expects($this->any())
+        $request->expects($this->any())
             ->method('getMethod')
-            ->will($this->returnValue('SOMETHING'));
+            ->will($this->returnValue('POST'));
 
-        $ctrl = $this->getMockForAbstractClass(
+        $controller = $this->getMockForAbstractClass(
             'Dispatcher\\DispatchableController',
             array(),
             '',
@@ -45,11 +52,42 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
             true,
             true,
             array('getViews'));
-        $ctrl->expects($this->never())
+        $controller->expects($this->never())
             ->method('getViews')
             ->will($this->returnValue(array('index')));
 
-        $response = $ctrl->doDispatch($requestMock, array(), true);
+        $response = $controller->doDispatch($request, array(), true);
         $this->assertEquals(404, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function doDispatch_OnValidRequestMethod_ShouldReturnValidResponse()
+    {
+        $request = $this->getMock('Dispatcher\\HttpRequest',
+            array('getMethod'));
+        $request->expects($this->any())
+            ->method('getMethod')
+            ->will($this->returnValue('GET'));
+
+        $controller = $this->getMockForAbstractClass(
+            'Dispatcher\\DispatchableController',
+            array(),
+            '',
+            true,
+            true,
+            true,
+            array('getViews', 'get'));
+        $controller->expects($this->never())
+            ->method('getViews')
+            ->will($this->returnValue(array('index')));
+        $controller->expects($this->once())
+            ->method('get')
+            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'))
+            ->will($this->returnValue(\Dispatcher\JsonResponse::create()));
+
+        $response = $controller->doDispatch($request, array(), true);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 }

@@ -194,13 +194,14 @@ class BootstrapController extends \CI_Controller
         }
 
         // Finally, let's load the class and dispatch it
-        $class = $this->loadClass($classInfo->getName(), $classInfo->getPath());
+        $controller = $this->loadClass($classInfo->getName(),
+            $classInfo->getPath());
 
-        if (!$class instanceof DispatchableInterface) {
+        if (!$controller instanceof DispatchableInterface) {
             return new Error404Response();
         }
 
-        return $class->doDispatch($request, $classInfo->getParams(),
+        return $controller->doDispatch($request, $classInfo->getParams(),
             !$this->_debug);
     }
 
