@@ -3,21 +3,19 @@ namespace Dispatcher;
 
 final class Error404Response extends HttpResponse
 {
-    public static function create($statusCode = 404,
-                                  $content = '',
-                                  $headers = array())
+    public static function create()
     {
-        return new static($statusCode, $content, $headers);
+        return new static();
     }
 
-    public function __construct($statusCode = 404,
-                                $content = '',
-                                $headers = array())
+    public function __construct()
     {
-        parent::__construct($statusCode, $content, $headers);
+        parent::__construct(404);
     }
 
-    public function render(HttpRequestInterface $request)
+    public function sendBody(HttpRequestInterface $request)
     {
+        show_404();
+        exit();
     }
 }

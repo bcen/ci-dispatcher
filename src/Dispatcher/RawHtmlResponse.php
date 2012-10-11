@@ -6,7 +6,9 @@ namespace Dispatcher;
  */
 class RawHtmlResponse extends HttpResponse
 {
-    public function render(HttpRequestInterface $request)
+    public function sendBody(HttpRequestInterface $request)
     {
+        $this->getCI()->output->set_output($this->getContent());
+        exit();
     }
 }

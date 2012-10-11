@@ -1,12 +1,27 @@
 <?php
 namespace Dispatcher;
 
-/**
- * This class indicates we are rendering the content through load->view
- */
 class ViewTemplateResponse extends HttpResponse
 {
-    public function render(HttpRequestInterface $request)
+    private $views = array();
+
+    public function getViews()
     {
+        return $this->views;
+    }
+
+    public function setViews(array $views)
+    {
+        $this->views = $views;
+        return $this;
+    }
+
+    public function sendBody(HttpRequestInterface $request)
+    {
+        $data = $this->getContent();
+        $data = is_array($data) ? $data : array();
+        foreach ($this->getViews() as $v) {
+            $this->getCI()->load->view($v, $data);
+        }
     }
 }

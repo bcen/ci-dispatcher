@@ -26,11 +26,11 @@ class HttpResponseTest extends \PHPUnit_Framework_Testcase
         $obj = new stdClass();
         $objHash = spl_object_hash($obj);
 
-        $response = JsonResponse::create()->setData(array('obj' => $obj));
-        $data = $response->getData();
+        $response = JsonResponse::create()->setContent(array('obj' => $obj));
+        $data = $response->getContent();
 
         $this->assertEquals($objHash, spl_object_hash($data['obj']));
-        $response->setData(NULL);
+        $response->setContent(NULL);
     }
 
     /**

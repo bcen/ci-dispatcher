@@ -1,15 +1,14 @@
 <?php
 namespace Dispatcher;
 
-abstract class HttpResponse implements HttpResponseInterface
+abstract class HttpResponse implements HttpResponseInterface, CodeIgniterAware
 {
     protected $statusCode;
     protected $content;
-    protected $views;
-    protected $contextData = array();
     protected $contentType;
     protected $cookies;
     protected $headers;
+    private $_CI;
 
     public static function create($statusCode = 200,
                                   $content = '',
@@ -61,28 +60,6 @@ abstract class HttpResponse implements HttpResponseInterface
         return $this;
     }
 
-    public function getViews()
-    {
-        return $this->views;
-    }
-
-    public function setViews(array $views)
-    {
-        $this->views = $views;
-        return $this;
-    }
-
-    public function getData()
-    {
-        return $this->contextData;
-    }
-
-    public function setData($data)
-    {
-        $this->contextData = $data;
-        return $this;
-    }
-
     public function getHeader($key)
     {
         return $this->headers[$key];
@@ -104,4 +81,33 @@ abstract class HttpResponse implements HttpResponseInterface
         $this->headers = $headers;
         return $this;
     }
+
+    public function send(HttpRequestInterface $request)
+    {
+        $this->sendHeaders($request);
+        $this->sendBody($request);
+    }
+
+    public function setCI($ci)
+    {
+        $this->_CI = $ci;
+    }
+
+    protected function getCI()
+    {
+        return $this->_CI;
+    }
+
+    protected function sendHeaders(HttpRequestInterface $request)
+    {
+        $this->_CI->output->set_content_type($this->getContentType());
+
+        foreach ($this->getHeaders() as $k => $v) {
+            $this->output->set_header($k . ': ' . $v);
+        }
+
+        $this->_CI->output->set_status_header($this->getStatusCode());
+    }
+
+    abstract protected function sendBody(HttpRequestInterface $request);
 }

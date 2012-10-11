@@ -24,7 +24,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
         $this->assertInstanceOf('Dispatcher\\ViewTemplateResponse', $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals(array('message' => 'Hey'), $response->getData());
+        $this->assertEquals(array('message' => 'Hey'), $response->getContent());
         $this->assertContains('index', $response->getViews());
     }
 

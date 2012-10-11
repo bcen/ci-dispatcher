@@ -78,8 +78,7 @@ abstract class DispatchableController implements DispatchableInterface
      */
     protected function renderView(array $data = array(), $statusCode = 200)
     {
-        return ViewTemplateResponse::create($statusCode)
-            ->setData($data)
+        return ViewTemplateResponse::create($statusCode, $data)
             ->setViews($this->getViews());
     }
 
@@ -102,6 +101,6 @@ abstract class DispatchableController implements DispatchableInterface
      */
     protected function renderJson($data = null, $statusCode = 200)
     {
-        return JsonResponse::create($statusCode)->setData($data);
+        return JsonResponse::create($statusCode, $data);
     }
 }
