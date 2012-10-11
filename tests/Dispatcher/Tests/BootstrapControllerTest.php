@@ -129,8 +129,8 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
      */
     public function dispatch_OnExistentURI_ShouldReturnNormalResponse()
     {
-        $reqMock = $this->getMock('Dispatcher\\HttpRequest', array('getMethod'),
-            array(get_instance()));
+        $reqMock = $this->getMock('Dispatcher\\HttpRequest',
+            array('getMethod'));
         $reqMock->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue('GET'));

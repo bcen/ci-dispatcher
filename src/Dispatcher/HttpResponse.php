@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher;
 
-abstract class HttpResponse implements HttpResponseInterface, CodeIgniterAware
+abstract class HttpResponse implements HttpResponseInterface
 {
     protected $statusCode;
     protected $content;
@@ -88,14 +88,9 @@ abstract class HttpResponse implements HttpResponseInterface, CodeIgniterAware
         $this->sendBody($request);
     }
 
-    public function setCI($ci)
-    {
-        $this->_CI = $ci;
-    }
-
     protected function getCI()
     {
-        return $this->_CI;
+        return get_instance();
     }
 
     protected function sendHeaders(HttpRequestInterface $request)

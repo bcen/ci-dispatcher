@@ -110,7 +110,7 @@ class BootstrapController extends \CI_Controller
     {
         static $request = null;
         if ($request === null) {
-            $request = new HttpRequest(get_instance());
+            $request = new HttpRequest();
             $this->_container['request'] = $request;
         }
         return $request;
@@ -184,9 +184,6 @@ class BootstrapController extends \CI_Controller
             try {
                 $response = $controller->doDispatch($request,
                     $classInfo->getParams());
-                if ($response instanceof CodeIgniterAware) {
-                    $response->setCI(get_instance());
-                }
             } catch (\Exception $ex) {
                 log_message('error', '');
                 return new Error404Response();

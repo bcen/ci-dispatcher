@@ -53,7 +53,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
     public function doDispatch_OnInvalidRequestMethod_ShouldThrowReflectionException()
     {
         $requestMock = $this->getMock('Dispatcher\\HttpRequest',
-            array('getMethod'), array(get_instance()));
+            array('getMethod'));
         $requestMock->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue('POST'));
@@ -73,7 +73,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
     public function doDispatch_OnValidRequestMethod_ShouldReturnValidResponse()
     {
         $requestMock = $this->getMock('Dispatcher\\HttpRequest',
-            array('getMethod'), array(get_instance()));
+            array('getMethod'));
         $requestMock->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue('GET'));
@@ -96,7 +96,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
     public function doDispatch_WithoutExpectedParams_ShouldThrowLogicException()
     {
         $requestMock = $this->getMock('Dispatcher\\HttpRequest',
-            array('getMethod'), array(get_instance()));
+            array('getMethod'));
         $requestMock->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue('POST'));
