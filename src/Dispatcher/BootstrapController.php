@@ -177,21 +177,24 @@ class BootstrapController extends \CI_Controller
             return new Error404Response();
         }
 
-        if (!$this->_debug) {
-            set_error_handler(function() {
-                throw new Exception();
-            });
-            try {
-                $response = $controller->doDispatch($request,
-                    $classInfo->getParams());
-            } catch (\Exception $ex) {
-                log_message('error', '');
-                return new Error404Response();
-            }
-            restore_error_handler();
-        } else {
+        $exception = null;
+        set_error_handler(function($errno, $errstr, $errfile, $errline) {
+            throw new \Exception("$errstr@$errno@$errfile@$errline");
+        });
+        try {
             $response = $controller->doDispatch($request,
                 $classInfo->getParams());
+        } catch (\Exception $ex) {
+            $exception = $ex;
+        }
+        restore_error_handler();
+
+        if ($exception) {
+            if ($this->_debug) {
+                show_error($exception->getMessage());
+            } else {
+                $response = new Error404Response();
+            }
         }
 
         return $response;
