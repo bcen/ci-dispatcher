@@ -11,7 +11,7 @@ class JsonResponse extends HttpResponse
         $this->setContentType('application/json');
     }
 
-    public function sendBody(HttpRequestInterface $request)
+    protected function sendBody(HttpRequestInterface $request)
     {
         $data = $this->getData();
         $content = (is_array($data) || is_object($data))

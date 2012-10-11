@@ -16,7 +16,7 @@ class ViewTemplateResponse extends HttpResponse
         return $this;
     }
 
-    public function sendBody(HttpRequestInterface $request)
+    protected function sendBody(HttpRequestInterface $request)
     {
         $data = $this->getContent();
         $data = is_array($data) ? $data : array();

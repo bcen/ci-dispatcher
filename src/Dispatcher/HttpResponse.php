@@ -103,5 +103,8 @@ abstract class HttpResponse implements HttpResponseInterface
         $this->getCI()->output->set_status_header($this->getStatusCode());
     }
 
-    abstract protected function sendBody(HttpRequestInterface $request);
+    protected function sendBody(HttpRequestInterface $request)
+    {
+        $this->getCI()->output->set_output('');
+    }
 }

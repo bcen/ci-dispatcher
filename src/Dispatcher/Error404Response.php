@@ -13,7 +13,7 @@ final class Error404Response extends HttpResponse
         parent::__construct(404);
     }
 
-    public function sendBody(HttpRequestInterface $request)
+    protected function sendBody(HttpRequestInterface $request)
     {
         show_404();
         exit();
