@@ -8,7 +8,6 @@ abstract class HttpResponse implements HttpResponseInterface
     protected $contentType;
     protected $cookies;
     protected $headers;
-    private $_CI;
 
     public static function create($statusCode = 200,
                                   $content = '',
@@ -95,13 +94,13 @@ abstract class HttpResponse implements HttpResponseInterface
 
     protected function sendHeaders(HttpRequestInterface $request)
     {
-        $this->_CI->output->set_content_type($this->getContentType());
+        $this->getCI()->output->set_content_type($this->getContentType());
 
         foreach ($this->getHeaders() as $k => $v) {
             $this->output->set_header($k . ': ' . $v);
         }
 
-        $this->_CI->output->set_status_header($this->getStatusCode());
+        $this->getCI()->output->set_status_header($this->getStatusCode());
     }
 
     abstract protected function sendBody(HttpRequestInterface $request);
