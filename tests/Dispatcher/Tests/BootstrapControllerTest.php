@@ -18,6 +18,29 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
      * @test
      * @dataProvider getUri
      */
+    public function initializeConfig_WithNullConfig_ShouldPass($method, $uri)
+    {
+        $controller = $this->getMock('Dispatcher\\BootstrapController',
+            array('loadDispatcherConfig', 'renderResponse', 'dispatch',
+                  'createContainer'));
+        $controller->expects($this->any())
+            ->method('renderResponse');
+        $controller->expects($this->any())
+            ->method('dispatch')
+            ->will($this->returnValue(JsonResponse::create()));
+        $controller->expects($this->once())
+            ->method('loadDispatcherConfig')
+            ->will($this->returnValue(null));
+        $controller->expects($this->once())
+            ->method('createContainer');
+
+        $controller->_remap($method, $uri);
+    }
+
+    /**
+     * @test
+     * @dataProvider getUri
+     */
     public function _remap_OnAnyUri_ShouldCallRenderResponseWithRequestAndResponse($method, $uri)
     {
         $completeUri = $uri;

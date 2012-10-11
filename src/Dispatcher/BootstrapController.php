@@ -191,7 +191,7 @@ class BootstrapController extends \CI_Controller
 
         if ($exception) {
             if ($this->_debug) {
-                show_error($exception->getMessage());
+                throw $exception;
             } else {
                 $response = new Error404Response();
             }
