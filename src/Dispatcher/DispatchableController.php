@@ -31,6 +31,11 @@ abstract class DispatchableController implements DispatchableInterface
         $response = call_user_func_array(array(
             $this, strtolower($request->getMethod())), $params);
 
+        if (!$response instanceof HttpResponseInterface) {
+            throw new \LogicException(
+                'response must implement HttpResponseInterface');
+        }
+
         return $response;
     }
 

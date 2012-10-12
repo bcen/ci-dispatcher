@@ -110,4 +110,25 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
         $controller->doDispatch($requestMock, array());
     }
+
+    /**
+     * @test
+     * @expectedException LogicException
+     */
+    public function doDispatch_FromNullResponse_ShouldThrowLogicException()
+    {
+        $requestMock = $this->getMock('Dispatcher\\HttpRequest',
+            array('getMethod'));
+        $requestMock->expects($this->any())
+            ->method('getMethod')
+            ->will($this->returnValue('get'));
+
+        $controller = $this->getMock(
+            'Dispatcher\\DispatchableController', array('get'));
+        $controller->expects($this->any())
+            ->method('get')
+            ->will($this->returnValue(null));
+
+        $controller->doDispatch($requestMock, array());
+    }
 }
