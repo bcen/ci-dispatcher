@@ -23,7 +23,7 @@ class BootstrapController extends \CI_Controller
      * Whether to show/hide debug info
      * @var boolean
      */
-    private $_debug = FALSE;
+    private $_debug = false;
 
     /**
      * Dependency injection container (IoC)
@@ -42,43 +42,31 @@ class BootstrapController extends \CI_Controller
      */
     public function _remap($method, $uri)
     {
-        array_unshift($uri, $method);
+        $this->initializeConfig();
 
-        set_error_handler(function($errno, $errstr) {
-            throw new Exception("$errno@$errstr");
-        });
-        try {
-            $this->initializeConfig();
-
-            $request = $this->createHttpRequest();
-            if (!$request instanceof HttpRequestInterface) {
-                throw new \Exception(
-                    'Object must implements \Dispatcher\HttpRequestInterface');
-            }
-
-            $middlewares = $this->loadMiddlewares();
-            foreach ($middlewares as $m) {
-                if (method_exists($m, 'processRequest')) {
-                    $m->processRequest($request);
-                }
-            }
-
-            $response = $this->dispatch($uri, $request);
-
-            for ($i = count($middlewares) - 1; $i >= 0; $i--) {
-                if (method_exists($middlewares[$i], 'processResponse')) {
-                    $middlewares[$i]->processResponse($response);
-                }
-            }
-
-            $this->renderResponse($request, $response);
-        } catch (Exception $ex) {
-            if ($this->_debug) {
-                throw $ex;
-            }
-            $response = new Error404Response();
+        $request = $this->createHttpRequest();
+        if (!$request instanceof HttpRequestInterface) {
+            throw new \Exception(
+                'Object must implements \Dispatcher\HttpRequestInterface');
         }
-        restore_error_handler();
+
+        $middlewares = $this->loadMiddlewares();
+        foreach ($middlewares as $m) {
+            if (method_exists($m, 'processRequest')) {
+                $m->processRequest($request);
+            }
+        }
+
+        array_unshift($uri, $method);
+        $response = $this->dispatch($uri, $request);
+
+        for ($i = count($middlewares) - 1; $i >= 0; $i--) {
+            if (method_exists($middlewares[$i], 'processResponse')) {
+                $middlewares[$i]->processResponse($response);
+            }
+        }
+
+        $this->renderResponse($request, $response);
     }
 
     protected function initializeConfig()
@@ -189,7 +177,30 @@ class BootstrapController extends \CI_Controller
             return new Error404Response();
         }
 
-        return $controller->doDispatch($request, $classInfo->getParams());
+
+        $exception = null;
+
+        set_error_handler(function($errno, $errstr) {
+            throw new Exception("$errno@$errstr");
+        });
+        try {
+            $response = $controller->doDispatch(
+                $request, $classInfo->getParams());
+        } catch (Exception $ex) {
+            $exception = $ex;
+            $response = new Error404Response();
+        }
+        restore_error_handler();
+
+        if ($exception) {
+            // When exception thrown,
+            // only re-throw in debug mode
+            if ($this->_debug) {
+                throw $exception;
+            }
+        }
+
+        return $response;
     }
 
     /**
