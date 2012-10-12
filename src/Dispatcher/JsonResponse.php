@@ -13,7 +13,7 @@ class JsonResponse extends HttpResponse
 
     protected function sendBody(HttpRequestInterface $request)
     {
-        $data = $this->getData();
+        $data = $this->getContent();
         $content = (is_array($data) || is_object($data))
             ? json_encode($data) : '';
         $this->getCI()->output->set_output($content);
