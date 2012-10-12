@@ -42,31 +42,43 @@ class BootstrapController extends \CI_Controller
      */
     public function _remap($method, $uri)
     {
-        $this->initializeConfig();
-
-        $request = $this->createHttpRequest();
-        if (!$request instanceof HttpRequestInterface) {
-            throw new \Exception(
-                'Object must implements \Dispatcher\HttpRequestInterface');
-        }
-
-        $middlewares = $this->loadMiddlewares();
-        foreach ($middlewares as $m) {
-            if (method_exists($m, 'processRequest')) {
-                $m->processRequest($request);
-            }
-        }
-
         array_unshift($uri, $method);
-        $response = $this->dispatch($uri, $request);
 
-        for ($i = count($middlewares) - 1; $i >= 0; $i--) {
-            if (method_exists($middlewares[$i], 'processResponse')) {
-                $middlewares[$i]->processResponse($response);
+        set_error_handler(function($errno, $errstr) {
+            throw new Exception("$errno@$errstr");
+        });
+        try {
+            $this->initializeConfig();
+
+            $request = $this->createHttpRequest();
+            if (!$request instanceof HttpRequestInterface) {
+                throw new \Exception(
+                    'Object must implements \Dispatcher\HttpRequestInterface');
             }
-        }
 
-        $this->renderResponse($request, $response);
+            $middlewares = $this->loadMiddlewares();
+            foreach ($middlewares as $m) {
+                if (method_exists($m, 'processRequest')) {
+                    $m->processRequest($request);
+                }
+            }
+
+            $response = $this->dispatch($uri, $request);
+
+            for ($i = count($middlewares) - 1; $i >= 0; $i--) {
+                if (method_exists($middlewares[$i], 'processResponse')) {
+                    $middlewares[$i]->processResponse($response);
+                }
+            }
+
+            $this->renderResponse($request, $response);
+        } catch (Exception $ex) {
+            if ($this->_debug) {
+                throw $ex;
+            }
+            $response = new Error404Response();
+        }
+        restore_error_handler();
     }
 
     protected function initializeConfig()
@@ -177,27 +189,7 @@ class BootstrapController extends \CI_Controller
             return new Error404Response();
         }
 
-        $exception = null;
-        set_error_handler(function($errno, $errstr, $errfile, $errline) {
-            throw new \Exception("$errstr@$errno@$errfile@$errline");
-        });
-        try {
-            $response = $controller->doDispatch($request,
-                $classInfo->getParams());
-        } catch (\Exception $ex) {
-            $exception = $ex;
-        }
-        restore_error_handler();
-
-        if ($exception) {
-            if ($this->_debug) {
-                throw $exception;
-            } else {
-                $response = new Error404Response();
-            }
-        }
-
-        return $response;
+        return $controller->doDispatch($request, $classInfo->getParams());
     }
 
     /**
