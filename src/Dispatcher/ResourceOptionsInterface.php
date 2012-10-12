@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher;
 
-interface ResourceOptionInterface
+interface ResourceOptionsInterface
 {
     public static function create();
     public function getAllowedMethods();

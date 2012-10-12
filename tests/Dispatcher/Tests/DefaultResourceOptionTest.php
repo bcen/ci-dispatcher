@@ -4,13 +4,13 @@ namespace Dispatcher\Tests;
 class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
 {
     /**
-     * @var \Dispatcher\ResourceOptionInterface
+     * @var \Dispatcher\ResourceOptionsInterface
      */
     private $option;
 
     public function setUp()
     {
-        $this->option = \Dispatcher\DefaultResourceOption::create();
+        $this->option = \Dispatcher\DefaultResourceOptions::create();
     }
 
     public function test_getAllowedMethods_ShouldReturnGetPostPutDelete()
@@ -21,7 +21,7 @@ class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
 
     public function test_setAllowedMethods_ShouldPassWithoutError()
     {
-        $option = new \Dispatcher\DefaultResourceOption();
+        $option = new \Dispatcher\DefaultResourceOptions();
         try {
             $option->setAllowedFields(array('GET', 'POST'));
         } catch (\Exception $ex) {
@@ -37,7 +37,7 @@ class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
     public function test_setDefaultFormat_ShouldPassWithoutError()
     {
         try {
-            $option = \Dispatcher\DefaultResourceOption::create()
+            $option = \Dispatcher\DefaultResourceOptions::create()
                 ->setDefaultFormat('xml');
         } catch (\Exception $ex) {
             $this->fail();
@@ -53,7 +53,7 @@ class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
     public function test_setSupportedFormat_ShouldPassWithoutError()
     {
         try {
-            $option = \Dispatcher\DefaultResourceOption::create()
+            $option = \Dispatcher\DefaultResourceOptions::create()
                 ->setSupportedFormats(array('xml', 'yaml'));
 
             $this->assertEquals(array('xml', 'yaml'),
@@ -81,7 +81,7 @@ class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
     public function test_setAllowedFields_ShouldPassWithoutError()
     {
         try {
-            $option = \Dispatcher\DefaultResourceOption::create()
+            $option = \Dispatcher\DefaultResourceOptions::create()
                 ->setAllowedFields(array('firstName', 'lastName'));
         } catch (\Exception $ex) {
             $this->fail();

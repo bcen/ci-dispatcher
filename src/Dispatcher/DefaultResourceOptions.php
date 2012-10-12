@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher;
 
-class DefaultResourceOption implements ResourceOptionInterface
+class DefaultResourceOptions implements ResourceOptionsInterface
 {
     protected $options = array();
 
