@@ -9,14 +9,14 @@ abstract class DispatchableController implements DispatchableInterface
     /**
      * Does the actual dispatching.
      * @param HttpRequestInterface $request
-     * @param array $params
+     * @param array $args
      * @return HttpResponseInterface
      * @throws \LogicException When there is not enough expected arguments
      */
     public function doDispatch(HttpRequestInterface $request,
-                               array $params = array())
+                               array $args = array())
     {
-        $expectedNum = array_unshift($params, $request);
+        $expectedNum = array_unshift($args, $request);
 
         // see what is the requested method, e.g. 'GET', 'POST' and etc...
         $reflectedMethod = new \ReflectionMethod(
@@ -29,7 +29,7 @@ abstract class DispatchableController implements DispatchableInterface
         }
 
         $response = call_user_func_array(array(
-            $this, strtolower($request->getMethod())), $params);
+            $this, strtolower($request->getMethod())), $args);
 
         if (!$response instanceof HttpResponseInterface) {
             throw new \LogicException(
