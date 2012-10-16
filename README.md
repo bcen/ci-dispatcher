@@ -21,7 +21,7 @@ class Welcome extends CI_Controller
 {
     public function index()
     {
-        $this->load->view('welcome_message', array('title' => 'Welcome!'));
+        $this->load->view('welcome_message');
     }
 }
 ```
@@ -31,14 +31,9 @@ With CodeIgniter-Dispatcher's class-based controller
 ```php
 <?php
 
-class Index extends Dispatcher\DispatchableController
+class Index extends \Dispatcher\DispatchableController
 {
     protected $views = 'welcome_message';
-
-    public function get($request)
-    {
-        return $this->renderView(array('title' => 'Welcome!'));
-    }
 }
 ```
 
@@ -70,11 +65,11 @@ Installtion
     ```
 
     `Dispatcher\BootstrapInstaller::run($route)` will create 3 files inside of
-    CodeIgniter's `APPPATH`, if you want to skip the file creation, add `TRUE`
+    CodeIgniter's `APPPATH`, if you want to skip the file creation, add `true`
     to to skip the file check.
 
     ```php
-    Dispatcher\BootstrapInstaller::run($route, TRUE);
+    Dispatcher\BootstrapInstaller::run($route, true);
     ```
 
 Features
@@ -91,7 +86,7 @@ $config['container']['userDao'] = function($container) {
 // user_status.php
 <?php
 
-class User_Status extends Dispatcher\DispatchableController
+class User_Status extends \Dispatcher\DispatchableController
 {
     public function __construct($userDao)
     {
@@ -105,11 +100,63 @@ class User_Status extends Dispatcher\DispatchableController
 ```php
 <?php
 
-class DebugFilter extends Dispatcher\DispatchableMiddleware
+class DebugFilter
 {
     public function processRequest(Dispatcher\HttpRequestInterface $req)
     {
         // do something
+    }
+
+    public function processResponse(Dispatcher\HttpResponseInterface $res)
+    {
+        // do something
+    }
+}
+```
+
+`processRequest` and `processResponse` are optional, middleware can implement either or both
+to alter the request/response cycle.
+
+
+##### CodeIgniter Awareness #####
+
+Any class instantiation that is managed by the Dispatcher can implement `CodeIgniterAware`
+to have `CI` injection.
+
+E.g.
+```php
+<?php
+
+// Controller
+class User_Status extends \Dispatcher\DispatchableController implements CodeIgniterAware
+{
+    public function __construct($userDao)
+    {
+        $userDao->findUserById(1);
+    }
+    
+    public function setCI($ci)
+    {
+        $this->CI = $ci;
+    }
+}
+
+// Middleware
+class DebugFilter implements CodeIgniterAware
+{
+    public function processRequest(Dispatcher\HttpRequestInterface $req)
+    {
+        $cipher = $this->CI->encrypt->encode('plaintext', 'key');
+    }
+
+    public function processResponse(Dispatcher\HttpResponseInterface $res)
+    {
+        // do something
+    }
+    
+    public function setCI($ci)
+    {
+        $this->CI = $ci;
     }
 }
 ```
