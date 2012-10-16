@@ -155,7 +155,7 @@ class BootstrapController extends \CI_Controller
      * <i>Note: Resource must implement {@link \Dispatcher\DispatchableInterface}</i>
      * @param array                $uri     The incoming resource URI in array
      * @param HttpRequestInterface $request The incoming request object
-     * @throws \Exception
+     * @throws \Dispatcher\DispatchingException|\Exception
      * @return \Dispatcher\HttpResponseInterface
      */
     protected function dispatch($uri, HttpRequestInterface $request)
