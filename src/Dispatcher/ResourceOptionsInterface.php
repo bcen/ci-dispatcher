@@ -12,4 +12,6 @@ interface ResourceOptionsInterface
     public function setSupportedFormats(array $formats);
     public function getAllowedFields();
     public function setAllowedFields(array $fields);
+    public function getActionMaps();
+    public function setActionMaps(array $actionMaps);
 }

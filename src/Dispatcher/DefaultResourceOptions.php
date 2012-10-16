@@ -72,4 +72,24 @@ class DefaultResourceOptions implements ResourceOptionsInterface
         $this->options['allowedFields'] = $fields;
         return $this;
     }
+
+    public function getActionMaps()
+    {
+        if (isset($this->options['actionMaps'])) {
+            return $this->options['actionMaps'];
+        }
+
+        return array(
+            'GET'    => 'read',
+            'POST'   => 'create',
+            'PUT'    => 'update',
+            'DELETE' => 'delete'
+        );
+    }
+
+    public function setActionMaps(array $actionMaps)
+    {
+        $this->options['actionMaps'] = $actionMaps;
+        return $this;
+    }
 }
