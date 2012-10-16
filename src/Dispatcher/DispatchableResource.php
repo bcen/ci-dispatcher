@@ -17,7 +17,8 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $this->methodAccessCheck($request);
         $this->methodHandlerCheck($request);
-        $this->execMethodHandler($request, $args);
+        // $this->authenticationCheck($request);
+        // $this->authorizationCheck($request);
     }
 
     protected function methodAccessCheck(HttpRequestInterface $request)
@@ -42,11 +43,6 @@ abstract class DispatchableResource implements DispatchableInterface
                 . $request->getMethod(),
                 new RawHtmlResponse(501)); // Should be a resource response
         }
-    }
-
-    protected function execMethodHandler(HttpRequestInterface $request,
-                                         array $args = array())
-    {
     }
 
     protected function mapMethodToAction(HttpRequestInterface $request,
