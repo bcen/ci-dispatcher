@@ -186,6 +186,9 @@ class BootstrapController extends \CI_Controller
         try {
             $response = $controller->doDispatch(
                 $request, $classInfo->getParams());
+        } catch (DispatchingException $ex) {
+            $exception = $ex;
+            $response = $ex->getResponse();
         } catch (Exception $ex) {
             $exception = $ex;
             $response = new Error404Response();
