@@ -8,49 +8,38 @@ abstract class DispatchableResource extends DispatchableController
      */
     private $options;
 
-    private $methodMaps = array(
+    private $actionMethods = array(
         'GET'    => 'read',
         'POST'   => 'create',
         'PUT'    => 'update',
         'DELETE' => 'delete'
     );
 
-    public function __construct()
-    {
-        $this->setOptions(new DefaultResourceOptions());
-    }
-
     public function doDispatch(HttpRequestInterface $request,
                                array $args = array())
     {
-        $method = $this->mapToMethod($request, $args);
-        if (!$method) {
-            return $this->renderJson(
-                array('userMessage' => 'Method Not Found'), 404);
-        }
-
-        $bundle = $this->createBundle($request);
-
-        array_unshift($args, $bundle);
-        call_user_func_array(array($this, $method), $args);
-
-        return $this->createResponse($bundle);
+        $this->requestHandlerCheck($request);
+        $this->methodCheck($request);
     }
 
-    protected function mapToMethod(HttpRequestInterface $request,
-                                   array $args = array())
+    protected function requestHandlerCheck(HttpRequestInterface $request)
     {
-        $allowed = $this->getOptions()->getAllowedMethods();
-        if (in_array($request->getMethod(), $allowed)) {
-            $method = $this->methodMaps[$request->getMethod()];
-            $method .= !empty($args) ? 'Detail' : 'List';
-            return $method;
-        }
-        return null;
+        // checks whether GET, POST, PUT, DELETE is handling correctly
+        throw new \LogicException('Failed');
+    }
+
+    protected function methodCheck(HttpRequestInterface $request)
+    {
+        // checks whether request method is allowed
+        throw new \LogicException('Failed');
     }
 
     protected function getOptions()
     {
+        if (!$this->options) {
+            // creates default options if nothing found
+            $this->options = new DefaultResourceOptions();
+        }
         return $this->options;
     }
 
@@ -58,17 +47,5 @@ abstract class DispatchableResource extends DispatchableController
     {
         $this->options = $options;
         return $this;
-    }
-
-    protected function createBundle($request)
-    {
-        return array('request' => $request);
-    }
-
-    protected function createResponse($bundle)
-    {
-        $statusCode = isset($bundle['statusCode'])
-            ? $bundle['statusCode'] : 200;
-        return null;
     }
 }
