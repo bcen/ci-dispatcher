@@ -1,37 +1,61 @@
 <?php
 namespace Dispatcher;
 
-abstract class DispatchableResource extends DispatchableController
+abstract class DispatchableResource implements DispatchableInterface
 {
     /**
      * @var \Dispatcher\DefaultResourceOptions
      */
     private $options;
 
-    private $actionMethods = array(
-        'GET'    => 'read',
-        'POST'   => 'create',
-        'PUT'    => 'update',
-        'DELETE' => 'delete'
-    );
+    public function get($bundle)
+    {
+    }
 
     public function doDispatch(HttpRequestInterface $request,
                                array $args = array())
     {
-        $this->requestHandlerCheck($request);
-        $this->methodCheck($request);
+        $this->methodAccessCheck($request);
+        $this->methodHandlerCheck($request);
+        $this->execMethodHandler($request, $args);
     }
 
-    protected function requestHandlerCheck(HttpRequestInterface $request)
+    protected function methodAccessCheck(HttpRequestInterface $request)
     {
-        // checks whether GET, POST, PUT, DELETE is handling correctly
-        throw new \LogicException('Failed');
+        $reqMethod = $request->getMethod();
+        $allowed = array_filter($this->getOptions()->getAllowedMethods(),
+                                function($ele) use($reqMethod) {
+            return strtolower($ele) === strtolower($reqMethod);
+        });
+
+        if (empty($allowed)) {
+            throw new DispatchingException('Method Not Allowed',
+                new RawHtmlResponse(405)); // Should be a resource response
+        }
     }
 
-    protected function methodCheck(HttpRequestInterface $request)
+    protected function methodHandlerCheck(HttpRequestInterface $request)
     {
-        // checks whether request method is allowed
-        throw new \LogicException('Failed');
+        if (!method_exists($this, $request->getMethod())) {
+            throw new DispatchingException(
+                'No request method handler implemented for '
+                . $request->getMethod(),
+                new RawHtmlResponse(501)); // Should be a resource response
+        }
+    }
+
+    protected function execMethodHandler(HttpRequestInterface $request,
+                                         array $args = array())
+    {
+    }
+
+    protected function mapMethodToAction(HttpRequestInterface $request,
+                                         array $args = array())
+    {
+        $actionMaps = $this->getOptions()->getActionMaps();
+        $action = $actionMaps[strtoupper($request->getMethod())];
+        $type = count($args) >= 1 ? 'Object' : 'Collection';
+        return $action . $type;
     }
 
     protected function getOptions()
