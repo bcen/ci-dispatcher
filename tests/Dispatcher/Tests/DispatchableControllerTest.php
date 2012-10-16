@@ -30,7 +30,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
     /**
      * @test
-     * @expectedException LogicException
+     * @expectedException \Dispatcher\DispatchingException
      * @expectedExceptionMessage No views defined.
      */
     public function get_WithoutView_ShouldThrowLogicException()
@@ -91,7 +91,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
     /**
      * @test
-     * @expectedException LogicException
+     * @expectedException \Dispatcher\DispatchingException
      */
     public function doDispatch_WithoutExpectedParams_ShouldThrowLogicException()
     {
@@ -113,7 +113,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
     /**
      * @test
-     * @expectedException LogicException
+     * @expectedException \Dispatcher\DispatchingException
      */
     public function doDispatch_FromNullResponse_ShouldThrowLogicException()
     {

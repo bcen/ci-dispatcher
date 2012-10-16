@@ -8,32 +8,32 @@ abstract class DispatchableController implements DispatchableInterface
 {
     /**
      * Does the actual dispatching.
-     * @param HttpRequestInterface $request
-     * @param array $args
+     * @param HttpRequestInterface $request The incoming request
+     * @param array                $args    Extra arguments
+     * @throws \Dispatcher\DispatchingException
      * @return HttpResponseInterface
-     * @throws \LogicException When there is not enough expected arguments
      */
     public function doDispatch(HttpRequestInterface $request,
                                array $args = array())
     {
-        $expectedNum = array_unshift($args, $request);
+        $argc = array_unshift($args, $request);
 
         // see what is the requested method, e.g. 'GET', 'POST' and etc...
         $reflectedMethod = new \ReflectionMethod(
             $this, strtolower($request->getMethod()));
 
-        if ($expectedNum > count($reflectedMethod->getParameters())) {
-            throw new \LogicException(
-                sprintf('Method: %s must accept %d params',
-                        strtolower($request->getMethod()), $expectedNum));
+        if ($argc > count($reflectedMethod->getParameters())) {
+            throw new DispatchingException('Not enough arguments',
+                new Error404Response());
         }
 
         $response = call_user_func_array(array(
             $this, strtolower($request->getMethod())), $args);
 
         if (!$response instanceof HttpResponseInterface) {
-            throw new \LogicException(
-                'response must implement HttpResponseInterface');
+            throw new DispatchingException(
+                'response must implement HttpResponseInterface',
+                new Error404Response());
         }
 
         return $response;
@@ -63,14 +63,15 @@ abstract class DispatchableController implements DispatchableInterface
     /**
      * Gets the views for view template response.
      * @return array
-     * @throws \LogicException When there is no views property defined
+     * @throws \Dispatcher\DispatchingException When there is no views property defined
      */
     protected function getViews()
     {
         $views = property_exists($this, 'views') ? $this->views : array();
         $views = is_array($views) ? $views : array($views);
         if (empty($views)) {
-            throw new \LogicException('No views defined.');
+            throw new DispatchingException('No views defined.',
+                new Error404Response());
         }
         return $views;
     }
