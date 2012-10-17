@@ -1,5 +1,5 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Http;
 
 /**
  * Interface for incoming HTTP request.
@@ -38,7 +38,7 @@ interface HttpRequestInterface
      * @return mixed            Returns all query string pair if $key is null,
      *                          otherwise, returns the value of the pair
      */
-    public function GET($key = null, $default = null, $sanitize = false);
+    public function get($key = null, $default = null, $sanitize = false);
 
     /**
      * Retrieves the POST param with the given $key.
@@ -48,7 +48,7 @@ interface HttpRequestInterface
      * @return mixed            Returns all POST param pair if $key is null,
      *                          otherwise, returns the value of the pair
      */
-    public function POST($key = null, $default = null, $sanitize = false);
+    public function post($key = null, $default = null, $sanitize = false);
 
     /**
      * Retrieves the PUT param with the given $key.
@@ -58,7 +58,7 @@ interface HttpRequestInterface
      * @return mixed            Returns all PUT param pair if $key is null,
      *                          otherwise, returns the value of the pair
      */
-    public function PUT($key = null, $default = null, $sanitize = false);
+    public function put($key = null, $default = null, $sanitize = false);
 
     /**
      * Retrieves the DELETE param with the given $key.
@@ -68,7 +68,7 @@ interface HttpRequestInterface
      * @return mixed            Returns all DELETE param pair if $key is null,
      *                          otherwise, returns the value of the pair
      */
-    public function DELETE($key = null, $default = null, $sanitize = false);
+    public function delete($key = null, $default = null, $sanitize = false);
 
     /**
      * Retrieves the param pair from both GET and POST.

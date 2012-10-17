@@ -1,6 +1,8 @@
 <?php
 namespace Dispatcher\Tests;
 
+use Dispatcher\Http\JsonResponse;
+
 class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 {
     /**
@@ -8,7 +10,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
      */
     public function get_WithViewAndData_ShouldReturnViewTemplateResponseWithSameViewAndData()
     {
-        $requestMock = $this->getMock('Dispatcher\\HttpRequestInterface');
+        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequestInterface');
 
         $controller = $this->getMock(
             'Dispatcher\\DispatchableController',
@@ -22,7 +24,8 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
         $response = $controller->get($requestMock);
 
-        $this->assertInstanceOf('Dispatcher\\ViewTemplateResponse', $response);
+        $this->assertInstanceOf(
+            'Dispatcher\\Http\\ViewTemplateResponse',$response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals(array('message' => 'Hey'), $response->getContent());
         $this->assertContains('index', $response->getViews());
@@ -30,12 +33,12 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
     /**
      * @test
-     * @expectedException \Dispatcher\DispatchingException
+     * @expectedException \Dispatcher\Exception\DispatchingException
      * @expectedExceptionMessage No views defined.
      */
     public function get_WithoutView_ShouldThrowLogicException()
     {
-        $requestMock = $this->getMock('Dispatcher\\HttpRequestInterface');
+        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequestInterface');
 
         $controller = $this->getMock(
             'Dispatcher\\DispatchableController', array('getContextData'));
@@ -52,7 +55,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
      */
     public function doDispatch_OnInvalidRequestMethod_ShouldThrowReflectionException()
     {
-        $requestMock = $this->getMock('Dispatcher\\HttpRequest',
+        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
             array('getMethod'));
         $requestMock->expects($this->any())
             ->method('getMethod')
@@ -72,7 +75,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
      */
     public function doDispatch_OnValidRequestMethod_ShouldReturnValidResponse()
     {
-        $requestMock = $this->getMock('Dispatcher\\HttpRequest',
+        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
             array('getMethod'));
         $requestMock->expects($this->any())
             ->method('getMethod')
@@ -80,10 +83,9 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
         $controller = $this->getMock(
             'Dispatcher\\DispatchableController', array('get'));
-        $controller->expects($this->once())
-            ->method('get')
-            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'))
-            ->will($this->returnValue(\Dispatcher\JsonResponse::create()));
+        $controller->expects($this->once())->method('get')->with(
+            $this->isInstanceOf('Dispatcher\\Http\\HttpRequestInterface'))
+            ->will($this->returnValue(new JsonResponse()));
 
         $response = $controller->doDispatch($requestMock, array());
         $this->assertEquals(200, $response->getStatusCode());
@@ -91,11 +93,11 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
     /**
      * @test
-     * @expectedException \Dispatcher\DispatchingException
+     * @expectedException \Dispatcher\Exception\DispatchingException
      */
     public function doDispatch_WithoutExpectedParams_ShouldThrowLogicException()
     {
-        $requestMock = $this->getMock('Dispatcher\\HttpRequest',
+        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
             array('getMethod'));
         $requestMock->expects($this->any())
             ->method('getMethod')
@@ -103,21 +105,20 @@ class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
 
         $controller = $this->getMock(
             'Dispatcher\\DispatchableController', array('post'));
-        $controller->expects($this->any())
-            ->method('post')
-            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'))
-            ->will($this->returnValue(\Dispatcher\JsonResponse::create()));
+        $controller->expects($this->any())->method('post')->with(
+            $this->isInstanceOf('Dispatcher\\Http\\HttpRequestInterface'))
+            ->will($this->returnValue(new JsonResponse()));
 
         $controller->doDispatch($requestMock, array());
     }
 
     /**
      * @test
-     * @expectedException \Dispatcher\DispatchingException
+     * @expectedException \Dispatcher\Exception\DispatchingException
      */
     public function doDispatch_FromNullResponse_ShouldThrowLogicException()
     {
-        $requestMock = $this->getMock('Dispatcher\\HttpRequest',
+        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
             array('getMethod'));
         $requestMock->expects($this->any())
             ->method('getMethod')

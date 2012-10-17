@@ -1,5 +1,5 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Http;
 
 interface HttpResponseInterface
 {

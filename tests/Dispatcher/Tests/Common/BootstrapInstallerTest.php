@@ -1,7 +1,7 @@
 <?php
-namespace Dispatcher\Tests;
+namespace Dispatcher\Tests\Common;
 
-use Dispatcher\BootstrapInstaller;
+use Dispatcher\Common\BootstrapInstaller;
 
 class BootstrapInstallerTest extends \PHPUnit_Framework_Testcase
 {

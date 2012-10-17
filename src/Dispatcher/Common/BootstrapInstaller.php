@@ -1,5 +1,5 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Common;
 
 /**
  * Installs the needed config files to codeigniter's config and controllers
@@ -34,17 +34,21 @@ class BootstrapInstaller
             die('No CodeIgniter installation found.');
         }
 
+        $templatesDir = realpath(__DIR__ . '/../../../templates');
+        $templatesDir = rtrim($templatesDir, DIRECTORY_SEPARATOR)
+            . DIRECTORY_SEPARATOR;
+
         $files = array(
             'dispatcher.php' => array(
-                'srcDir' => __DIR__ . '/templates/',
+                'srcDir' => $templatesDir,
                 'destDir' => APPPATH . 'config/'
             ),
             'dependencies.php' => array(
-                'srcDir' => __DIR__ . '/templates/',
+                'srcDir' => $templatesDir,
                 'destDir' => APPPATH . 'config/'
             ),
             'dispatcher_bootstrap.php' => array(
-                'srcDir' => __DIR__ . '/templates/',
+                'srcDir' => $templatesDir,
                 'destDir' => APPPATH . 'controllers/'
             ),
         );

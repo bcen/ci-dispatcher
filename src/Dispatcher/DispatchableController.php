@@ -1,6 +1,14 @@
 <?php
 namespace Dispatcher;
 
+use Dispatcher\Exception\DispatchingException;
+use Dispatcher\Http\HttpRequestInterface;
+use Dispatcher\Http\HttpResponseInterface;
+use Dispatcher\Http\Error404Response;
+use Dispatcher\Http\ViewTemplateResponse;
+use Dispatcher\Http\JsonResponse;
+use Dispatcher\Http\RawHtmlResponse;
+
 /**
  * Base controller that implemented {@link \Dispatcher\DispatchableInterface}.
  */
@@ -8,10 +16,10 @@ abstract class DispatchableController implements DispatchableInterface
 {
     /**
      * Does the actual dispatching.
-     * @param HttpRequestInterface $request The incoming request
-     * @param array                $args    Extra arguments
-     * @throws \Dispatcher\DispatchingException
-     * @return HttpResponseInterface
+     * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request
+     * @param array                                 $args    Extra arguments
+     * @throws \Dispatcher\Exception\DispatchingException
+     * @return \Dispatcher\Http\HttpResponseInterface
      */
     public function doDispatch(HttpRequestInterface $request,
                                array $args = array())
@@ -41,14 +49,12 @@ abstract class DispatchableController implements DispatchableInterface
 
     /**
      * The default handler for GET request.
-     * @param HttpRequestInterface $request
-     * @return HttpResponseInterface
+     * @param \Dispatcher\Http\HttpRequestInterface $request
+     * @return \Dispatcher\Http\HttpResponseInterface
      */
     public function get(HttpRequestInterface $request)
     {
-        $data = call_user_func_array(
-            array($this, 'getContextData'), func_get_args());
-        return $this->renderView($data);
+        return $this->renderView($this->getContextData($request));
     }
 
     /**
@@ -63,11 +69,11 @@ abstract class DispatchableController implements DispatchableInterface
     /**
      * Gets the views for view template response.
      * @return array
-     * @throws \Dispatcher\DispatchingException When there is no views property defined
+     * @throws \Dispatcher\Exception\DispatchingException When there is no views property defined
      */
     protected function getViews()
     {
-        $views = property_exists($this, 'views') ? $this->views : array();
+        $views = property_exists($this, 'views') ? $this->{'views'} : array();
         $views = is_array($views) ? $views : array($views);
         if (empty($views)) {
             throw new DispatchingException('No views defined.',
@@ -77,36 +83,35 @@ abstract class DispatchableController implements DispatchableInterface
     }
 
     /**
-     * Creates a {@link \Dispatcher\ViewTemplateResponse}.
+     * Creates a {@link \Dispatcher\Http\ViewTemplateResponse}.
      * @param array $data
      * @param int $statusCode
-     * @return HttpResponseInterface
+     * @return \Dispatcher\Http\HttpResponseInterface
      */
     protected function renderView(array $data = array(), $statusCode = 200)
     {
-        return ViewTemplateResponse::create($statusCode, $data)
-            ->setViews($this->getViews());
+        return new ViewTemplateResponse($this->getViews(), $statusCode, $data);
     }
 
     /**
-     * Creates a {@link \Dispatcher\RawHtmlResponse}.
+     * Creates a {@link \Dispatcher\Http\RawHtmlResponse}.
      * @param string $html
      * @param int $statusCode
-     * @return HttpResponseInterface
+     * @return \Dispatcher\Http\HttpResponseInterface
      */
     protected function renderHtml($html = '', $statusCode = 200)
     {
-        return RawHtmlResponse::create($statusCode, $html);
+        return new RawHtmlResponse($statusCode, $html);
     }
 
     /**
-     * Creates a {@link \Dispatcher\JsonResponse}.
+     * Creates a {@link \Dispatcher\Http\JsonResponse}.
      * @param mixed $data
      * @param int $statusCode
-     * @return HttpResponseInterface
+     * @return \Dispatcher\Http\HttpResponseInterface
      */
     protected function renderJson($data = null, $statusCode = 200)
     {
-        return JsonResponse::create($statusCode, $data);
+        return new JsonResponse($statusCode, $data);
     }
 }

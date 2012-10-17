@@ -4,13 +4,13 @@ namespace Dispatcher\Tests;
 class HttpRequestTest extends \PHPUnit_Framework_Testcase
 {
     /**
-     * @var \Dispatcher\HttpRequestInterface
+     * @var \Dispatcher\Http\HttpRequestInterface
      */
     private $request;
 
     public function setUp()
     {
-        $this->request = new \Dispatcher\HttpRequest();
+        $this->request = new \Dispatcher\Http\HttpRequest();
         if ($this->request === NULL) {
             $this->fail();
         }

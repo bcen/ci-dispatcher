@@ -1,5 +1,5 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Common;
 
 interface ResourceOptionsInterface
 {

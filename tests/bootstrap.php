@@ -393,7 +393,7 @@ function &get_instance()
     return CI_Controller::get_instance();
 }
 
-\Dispatcher\BootstrapInstaller::install();
+\Dispatcher\Common\BootstrapInstaller::install();
 $CI = new \Dispatcher\BootstrapController();
 
 /*

@@ -1,6 +1,9 @@
 <?php
 namespace Dispatcher\Tests;
 
+use Dispatcher\Common\DefaultResourceOptions;
+use Dispatcher\Exception\DispatchingException;
+
 class DispatchableResourceTest extends \PHPUnit_Framework_Testcase
 {
     /**
@@ -8,13 +11,13 @@ class DispatchableResourceTest extends \PHPUnit_Framework_Testcase
      */
     public function doDispatch_WithNoGetMethodAllowed_ShouldThrowDispatchingExceptionWith405NotAllowedResponse()
     {
-        $reqMock = $this->getMock('Dispatcher\\HttpRequest',
+        $reqMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
             array('getMethod'));
         $reqMock->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue('GET'));
 
-        $options = new \Dispatcher\DefaultResourceOptions();
+        $options = new DefaultResourceOptions();
         $options->setAllowedMethods(array('PUT'));
 
         $controller = $this->getMock('Dispatcher\\DispatchableResource',
@@ -25,7 +28,7 @@ class DispatchableResourceTest extends \PHPUnit_Framework_Testcase
 
         try {
             $controller->doDispatch($reqMock);
-        } catch (\Dispatcher\DispatchingException $ex) {
+        } catch (DispatchingException $ex) {
             $this->assertEquals(405, $ex->getResponse()->getStatusCode());
             return;
         }
@@ -38,7 +41,7 @@ class DispatchableResourceTest extends \PHPUnit_Framework_Testcase
      */
     public function placeholder()
     {
-        $reqMock = $this->getMock('Dispatcher\\HttpRequest',
+        $reqMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
             array('getMethod'));
         $reqMock->expects($this->any())
             ->method('getMethod')

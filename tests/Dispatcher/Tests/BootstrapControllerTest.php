@@ -1,9 +1,10 @@
 <?php
 namespace Dispatcher\Tests;
 
-use Dispatcher\JsonResponse;
+use Dispatcher\Http\JsonResponse;
+use Dispatcher\Common\ClassInfo;
 
-class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
+class BootstrapControllerTest extends \PHPUnit_Framework_Testcase
 {
     public function getUri()
     {
@@ -27,7 +28,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
             ->method('renderResponse');
         $controller->expects($this->any())
             ->method('dispatch')
-            ->will($this->returnValue(JsonResponse::create()));
+            ->will($this->returnValue(new JsonResponse()));
         $controller->expects($this->once())
             ->method('loadDispatcherConfig')
             ->will($this->returnValue(null));
@@ -46,6 +47,9 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
         $completeUri = $uri;
         array_unshift($completeUri, $method);
 
+        $requestClass = 'Dispatcher\\Http\\HttpRequestInterface';
+        $responseClass = 'Dispatcher\\Http\\HttpResponseInterface';
+
         // setup mock
         $controller = $this->getMock('Dispatcher\\BootstrapController',
             array('loadMiddlewares', 'dispatch', 'renderResponse'));
@@ -55,11 +59,11 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
         $controller->expects($this->any())
             ->method('dispatch')
             ->with($this->equalTo($completeUri))
-            ->will($this->returnValue(\Dispatcher\JsonResponse::create()));
+            ->will($this->returnValue(new JsonResponse()));
         $controller->expects($this->any())
             ->method('renderResponse')
-            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
-                   $this->isInstanceOf('Dispatcher\\HttpResponseInterface'));
+            ->with($this->isInstanceOf($requestClass),
+                   $this->isInstanceOf($responseClass));
 
         // run
         $controller->_remap($method, $uri);
@@ -76,20 +80,20 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 
         $ctrl->expects($this->once())
             ->method('dispatch')
-            ->will($this->returnValue(JsonResponse::create()));
+            ->will($this->returnValue(new JsonResponse()));
 
         $ctrl->expects($this->once())
             ->method('loadDispatcherConfig')
             ->will($this->returnValue(array(
                 'middlewares' => array(
-                    'Dispatcher\\Tests\Stub\\MiddlewareSpy'
+                    'Dispatcher\\Tests\\Stub\\MiddlewareSpy'
                 ),
                 'debug' => false)));
 
         $constraints = $this->logicalAnd(
-            $this->isInstanceOf('Dispatcher\\ClassInfo'),
+            $this->isInstanceOf('Dispatcher\\Common\\ClassInfo'),
             $this->attributeEqualTo('name',
-                                    'Dispatcher\\Tests\Stub\\MiddlewareSpy'),
+                                    'Dispatcher\\Tests\\Stub\\MiddlewareSpy'),
             $this->attributeEqualTo('path', ''));
         $ctrl->expects($this->once())
             ->method('loadClass')
@@ -109,7 +113,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 
         $ctrl->expects($this->once())
             ->method('dispatch')
-            ->will($this->returnValue(JsonResponse::create()));
+            ->will($this->returnValue(new JsonResponse()));
 
         $ctrl->expects($this->once())
             ->method('loadDispatcherConfig')
@@ -120,7 +124,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
             'debug' => false)));
 
         $constraints = $this->logicalAnd(
-            $this->isInstanceOf('Dispatcher\\ClassInfo'),
+            $this->isInstanceOf('Dispatcher\\Common\\ClassInfo'),
             $this->attributeEqualTo('name', 'Debug_Filter'),
             $this->attributeEqualTo('path',
                 APPPATH . 'middlewares/filters/debug_filter.php'));
@@ -139,10 +143,9 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
         $ctrl = $this->getMock('Dispatcher\\BootstrapController',
             array('renderResponse'));
 
-        $ctrl->expects($this->once())
-            ->method('renderResponse')
-            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
-                   $this->isInstanceOf('Dispatcher\\Error404Response'));
+        $ctrl->expects($this->once())->method('renderResponse')->with(
+            $this->isInstanceOf('Dispatcher\\Http\\HttpRequestInterface'),
+            $this->isInstanceOf('Dispatcher\\Http\\Error404Response'));
 
         $ctrl->_remap('method', array('api', 'v1', 'books'));
     }
@@ -152,7 +155,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
      */
     public function dispatch_OnExistentURI_ShouldReturnNormalResponse()
     {
-        $reqMock = $this->getMock('Dispatcher\\HttpRequest',
+        $reqMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
             array('getMethod'));
         $reqMock->expects($this->any())
             ->method('getMethod')
@@ -170,15 +173,13 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
             ->method('getViews')
             ->will($this->returnValue(array('index')));
 
-
         $ctrl = $this->getMock('Dispatcher\\BootstrapController',
             array('renderResponse', 'loadClassInfoOn',
                   'loadClass', 'createHttpRequest'));
 
-        $ctrl->expects($this->once())
-            ->method('renderResponse')
-            ->with($this->isInstanceOf('Dispatcher\\HttpRequestInterface'),
-                   $this->isInstanceOf('Dispatcher\\ViewTemplateResponse'));
+        $ctrl->expects($this->once())->method('renderResponse')->with(
+            $this->isInstanceOf('Dispatcher\\Http\\HttpRequestInterface'),
+            $this->isInstanceOf('Dispatcher\\Http\\ViewTemplateResponse'));
 
         $ctrl->expects($this->once())
             ->method('createHttpRequest')
@@ -186,7 +187,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 
         $ctrl->expects($this->once())
             ->method('loadClassInfoOn')
-            ->will($this->returnValue(new \Dispatcher\ClassInfo('Books', '')));
+            ->will($this->returnValue(new ClassInfo('Books', '')));
 
         $ctrl->expects($this->once())
             ->method('loadClass')
