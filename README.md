@@ -61,7 +61,7 @@ Installtion
 
 4. Include `autoload.php` to your project and add this to `routes.php`
     ```php
-    Dispatcher\BootstrapInstaller::run($route);
+    \Dispatcher\Common\BootstrapInstaller::run($route);
     ```
 
     `Dispatcher\BootstrapInstaller::run($route)` will create 3 files inside of
@@ -69,7 +69,7 @@ Installtion
     to to skip the file check.
 
     ```php
-    Dispatcher\BootstrapInstaller::run($route, true);
+    \Dispatcher\Common\BootstrapInstaller::run($route, true);
     ```
 
 Features
@@ -102,12 +102,12 @@ class User_Status extends \Dispatcher\DispatchableController
 
 class DebugFilter
 {
-    public function processRequest(Dispatcher\HttpRequestInterface $req)
+    public function processRequest(Dispatcher\Http\HttpRequestInterface $req)
     {
         // do something
     }
 
-    public function processResponse(Dispatcher\HttpResponseInterface $res)
+    public function processResponse(Dispatcher\Http\HttpResponseInterface $res)
     {
         // do something
     }
@@ -128,7 +128,7 @@ E.g.
 <?php
 
 // Controller
-class User_Status extends \Dispatcher\DispatchableController implements CodeIgniterAware
+class User_Status extends \Dispatcher\DispatchableController implements \Dispatcher\Common\CodeIgniterAware
 {
     public function __construct($userDao)
     {
@@ -142,14 +142,14 @@ class User_Status extends \Dispatcher\DispatchableController implements CodeIgni
 }
 
 // Middleware
-class DebugFilter implements CodeIgniterAware
+class DebugFilter implements \Dispatcher\Common\CodeIgniterAware
 {
-    public function processRequest(Dispatcher\HttpRequestInterface $req)
+    public function processRequest(Dispatcher\Http\HttpRequestInterface $req)
     {
         $cipher = $this->CI->encrypt->encode('plaintext', 'key');
     }
 
-    public function processResponse(Dispatcher\HttpResponseInterface $res)
+    public function processResponse(Dispatcher\Http\HttpResponseInterface $res)
     {
         // do something
     }
