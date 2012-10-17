@@ -28,8 +28,7 @@
     ],
     "autoload": {
         "psr-0": {
-            "Dispatcher": "src/",
-            "Dispatcher\\Tests": "tests/"
+            "Dispatcher": "src/"
         }
     },
     "require": {

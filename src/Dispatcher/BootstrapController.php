@@ -6,12 +6,22 @@ use Exception;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionException;
+use CI_Controller;
+
+use Dispatcher\Http\HttpRequestInterface;
+use Dispatcher\Http\HttpResponseInterface;
+use Dispatcher\Http\HttpRequest;
+use Dispatcher\Http\Error404Response;
+use Dispatcher\Common\DIContainer;
+use Dispatcher\Common\ClassInfo;
+use Dispatcher\Common\CodeIgniterAware;
+use Dispatcher\Exception\DispatchingException;
 
 /**
  * Re-routes incoming uri to class based controller instead of CI's default
  * function based controller
  */
-class BootstrapController extends \CI_Controller
+class BootstrapController extends CI_Controller
 {
     /**
      * Array of middlewares to handle before and after the dispatch.
@@ -23,13 +33,13 @@ class BootstrapController extends \CI_Controller
      * Whether to show/hide debug info
      * @var boolean
      */
-    private $_debug = FALSE;
+    private $_debug = false;
 
     /**
      * Dependency injection container (IoC)
-     * @var DIContainer
+     * @var \Dispatcher\Common\DIContainer
      */
-    private $container;
+    private $_container;
 
     /**
      * This will be called by CodeIgniter.php to remap to user defined function.
@@ -38,23 +48,22 @@ class BootstrapController extends \CI_Controller
      * @param $method string The CodeIgniter controller function to be called.
      * @param $uri    array  Array of uri segments
      * @throws \Exception Exception thrown if request does not implement
-     *                    {@link \Dispatcher\HttpRequestInterface}
+     *                    {@link \Dispatcher\Http\HttpRequestInterface}
      */
     public function _remap($method, $uri)
     {
         $this->initializeConfig();
 
         $request = $this->createHttpRequest();
-
         if (!$request instanceof HttpRequestInterface) {
             throw new \Exception(
-                'object must implements \Dispatcher\HttpRequestInterface');
+                'Object must implements \Dispatcher\HttpRequestInterface');
         }
 
         $middlewares = $this->loadMiddlewares();
         foreach ($middlewares as $m) {
             if (method_exists($m, 'processRequest')) {
-                $m->processRequest($request);
+                $m->{'processRequest'}($request);
             }
         }
 
@@ -63,7 +72,7 @@ class BootstrapController extends \CI_Controller
 
         for ($i = count($middlewares) - 1; $i >= 0; $i--) {
             if (method_exists($middlewares[$i], 'processResponse')) {
-                $middlewares[$i]->processResponse($response);
+                $middlewares[$i]->{'processResponse'}($response);
             }
         }
 
@@ -72,12 +81,12 @@ class BootstrapController extends \CI_Controller
 
     protected function initializeConfig()
     {
-        foreach ($this->loadDispatcherConfig() as $k => $v) {
-            if (property_exists($this, '_' . $k)) {
-                $this->{'_' . $k} = $v;
-            }
-        }
-        $this->container = $this->createContainer(
+        $config = $this->loadDispatcherConfig();
+        $this->_middlewares = isset($config['middlewares'])
+            ? $config['middlewares'] : array();
+        $this->_debug = isset($config['debug']) ? $config['debug'] : false;
+
+        $this->_container = $this->createContainer(
             $this->loadDependenciesConfig());
     }
 
@@ -88,7 +97,7 @@ class BootstrapController extends \CI_Controller
     protected function loadDispatcherConfig()
     {
         $config = array();
-        require(APPPATH . 'config/dispatcher.php');
+        require APPPATH . 'config/dispatcher.php';
         return $config;
     }
 
@@ -99,20 +108,20 @@ class BootstrapController extends \CI_Controller
     protected function loadDependenciesConfig()
     {
         $config = array();
-        require(APPPATH . 'config/dependencies.php');
+        require APPPATH . 'config/dependencies.php';
         return $config;
     }
 
     /**
-     * Creates the concrete {@link \Dispatcher\HttpRequestInterface} object.
-     * @return \Dispatcher\HttpRequestInterface
+     * Creates the concrete {@link \Dispatcher\Http\HttpRequestInterface} object.
+     * @return \Dispatcher\Http\HttpRequestInterface
      */
     protected function createHttpRequest()
     {
-        static $request = NULL;
-        if ($request === NULL) {
+        static $request = null;
+        if ($request === null) {
             $request = new HttpRequest();
-            $this->container['request'] = $request;
+            $this->_container['request'] = $request;
         }
         return $request;
     }
@@ -120,7 +129,7 @@ class BootstrapController extends \CI_Controller
     /**
      * Creates the DIContainer with the given configuration.
      * @param  array $config The dependency configuration
-     * @return \Dispatcher\DIContainer
+     * @return \Dispatcher\Common\DIContainer
      */
     protected function createContainer(array $config = array())
     {
@@ -148,38 +157,18 @@ class BootstrapController extends \CI_Controller
     protected function renderResponse(HttpRequestInterface $request,
                                       HttpResponseInterface $response)
     {
-        $this->output->set_content_type($response->getContentType());
-
-        foreach ($response->getHeaders() as $k => $v) {
-            $this->output->set_header($k . ': ' . $v);
-        }
-
-        if ($response->getStatusCode() !== 200) {
-            $this->output->set_status_header($response->getStatusCode());
-        }
-
-        // TODO: respect to the `Accept` header?
-        if ($response instanceof Error404Response) {
-            show_404();
-        } else if ($response instanceof ViewTemplateResponse) {
-            foreach ($response->getViews() as $v) {
-                $this->load->view($v, $response->getData());
-            }
-        } else if ($response instanceof RawHtmlResponse) {
-            $this->output->set_output($response->getContent());
-        } else if ($response instanceof JsonResponse) {
-            $data = $response->getData();
-            $content = (is_array($data) || is_object($data))
-                        ? json_encode($data) : '';
-            $this->output->set_output($content);
-        }
+        $response->send($request);
     }
 
     /**
      * Dispatches the incoming request to the proper resource.
-     * @param array                $uri     The incoming resource URI in array
-     * @param HttpRequestInterface $request The incoming request object
-     * @return \Dispatcher\HttpResponseInterface
+     * <i>Note: Resource must implement {@link \Dispatcher\Http\DispatchableInterface}</i>
+     *
+     * @param array                                 $uri     The incoming resource URI in array
+     * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request object
+     * @throws \Dispatcher\Exception\DispatchingException|\Exception|null
+     * @throws \Exception
+     * @return \Dispatcher\Http\HttpResponseInterface
      */
     protected function dispatch($uri, HttpRequestInterface $request)
     {
@@ -194,27 +183,53 @@ class BootstrapController extends \CI_Controller
         }
 
         // Finally, let's load the class and dispatch it
-        $class = $this->loadClass($classInfo->getName(), $classInfo->getPath());
+        $controller = $this->loadClass($classInfo);
 
-        if (!$class instanceof DispatchableInterface) {
+        if (!$controller instanceof DispatchableInterface) {
             return new Error404Response();
         }
 
-        return $class->doDispatch($request, $classInfo->getParams(),
-            !$this->_debug);
+
+        $exception = null;
+
+        set_error_handler(function($errno, $errstr) {
+            throw new Exception("$errno@$errstr");
+        });
+        try {
+            $response = $controller->doDispatch(
+                $request, $classInfo->getParams());
+        } catch (DispatchingException $ex) {
+            $exception = $ex;
+            $response = $ex->getResponse();
+        } catch (Exception $ex) {
+            $exception = $ex;
+            $response = new Error404Response();
+        }
+        restore_error_handler();
+
+        if ($exception) {
+            // When exception thrown,
+            // only re-throw in debug mode
+            if ($this->_debug) {
+                throw $exception;
+            }
+        }
+
+        return $response;
     }
 
     /**
      * Loads and returns an array of middleware instance.
-     * @return array(DispatchableMiddleware)
+     * @return array
      */
     protected function loadMiddlewares()
     {
         $middlewares = array();
         foreach ($this->_middlewares as $name) {
-            $mw = NULL;
+            $mw = null;
+            $classInfo = null;
             if (class_exists($name)) {
-                $clspath = '';
+                $classInfo = new ClassInfo($name, '');
             } else {
                 $paths = explode('/', $name);
                 $name = array_pop($paths);
@@ -227,10 +242,10 @@ class BootstrapController extends \CI_Controller
                     $paths,
                     array(strtolower($name).EXT)
                 );
-                $clspath = implode('/', $parts);
+                $classInfo = new ClassInfo($name, implode('/', $parts));
             }
 
-            $mw = $this->loadClass($name, $clspath);
+            $mw = $this->loadClass($classInfo);
             if ($mw !== null) {
                 $middlewares[] = $mw;
             }
@@ -243,7 +258,7 @@ class BootstrapController extends \CI_Controller
     {
         $path = APPPATH . 'controllers'; // default path to look for the class
 
-        $classInfo = NULL;
+        $classInfo = null;
 
         // We always take the first element in `$routes`
         // and try to see if the file exists with the same name
@@ -279,21 +294,20 @@ class BootstrapController extends \CI_Controller
      * <i>Note: The default implementation uses Reflection to inject
      * dependencies into constructor from the dependencies config.</i>
      *
-     * @param  $className string The class to be loaded
-     * @param  $classPath string The optional file path of the class
-     * @return object|null       The instance of the class, or null if failed
+     * @param \Dispatcher\Common\ClassInfo $classInfo
+     * @return mixed The instance of the class, or null if failed
      */
-    protected function loadClass($className, $classPath = '')
+    protected function loadClass(ClassInfo $classInfo)
     {
-        if (file_exists($classPath)) {
-            require_once($classPath);
+        if (file_exists($classInfo->getPath())) {
+            require_once $classInfo->getPath();
         }
 
-        if (!class_exists($className)) {
-            return NULL;
+        if (!class_exists($classInfo->getName())) {
+            return null;
         }
 
-        $clsReflect = new ReflectionClass($className);
+        $clsReflect = new ReflectionClass($classInfo->getName());
         $ctor = $clsReflect->getConstructor();
 
         // if constructor found, get all the parameters
@@ -308,13 +322,16 @@ class BootstrapController extends \CI_Controller
             $depName = $param->getName();
 
             try {
-                $deps[] = $this->container[$param->getName()];
+                $deps[] = $this->_container[$param->getName()];
             } catch (\InvalidArgumentException $ex) {
                 die("$depName is not found in your dependencies.php");
             }
         }
 
         $class = $clsReflect->newInstanceArgs($deps);
+        if ($class instanceof CodeIgniterAware) {
+            $class->setCI(get_instance());
+        }
         return $class;
     }
 }

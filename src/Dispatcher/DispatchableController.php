@@ -1,124 +1,117 @@
 <?php
 namespace Dispatcher;
 
+use Dispatcher\Exception\DispatchingException;
+use Dispatcher\Http\HttpRequestInterface;
+use Dispatcher\Http\HttpResponseInterface;
+use Dispatcher\Http\Error404Response;
+use Dispatcher\Http\ViewTemplateResponse;
+use Dispatcher\Http\JsonResponse;
+use Dispatcher\Http\RawHtmlResponse;
+
 /**
- * Base class of controller for Dispatcher.
+ * Base controller that implemented {@link \Dispatcher\DispatchableInterface}.
  */
 abstract class DispatchableController implements DispatchableInterface
 {
-    protected $views = '';
-
-    public function __construct()
-    {
-    }
-
-    public function __get($key)
-    {
-        // Remaps CodeIgniter's property to this controller
-        $CI =& get_instance();
-        if (property_exists($CI, $key)) {
-            return $CI->$key;
-        }
-
-        // stolen from
-        // http://www.php.net/manual/en/language.oop5.overloading.php#object.get
-        $trace = debug_backtrace();
-        trigger_error(
-            'Undefined property via __get(): ' . $key .
-            ' in ' . $trace[0]['file'] .
-            ' on line ' . $trace[0]['line'],
-            E_USER_NOTICE);
-
-        return NULL;
-    }
-
     /**
-     * {@inheritdoc}
+     * Does the actual dispatching.
+     * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request
+     * @param array                                 $args    Extra arguments
+     * @throws \Dispatcher\Exception\DispatchingException
+     * @return \Dispatcher\Http\HttpResponseInterface
      */
     public function doDispatch(HttpRequestInterface $request,
-                               array $params = array(),
-                               $failSilent = false)
+                               array $args = array())
     {
-        // see what is the requested method, e.g. 'GET', 'POST' and etc...
-        try {
-            $reflectedMethod = new \ReflectionMethod(
-                $this, strtolower($request->getMethod()));
+        $argc = array_unshift($args, $request);
 
-            if (count($params) >
-                count($reflectedMethod->getParameters()) - 1) {
-                log_message('debug', '404 due to not enough expected params');
-                return new Error404Response();
-            }
-        } catch (\ReflectionException $ex) {
-            log_message('error', 'Unable to reflect on method');
-            return new Error404Response();
+        // see what is the requested method, e.g. 'GET', 'POST' and etc...
+        $reflectedMethod = new \ReflectionMethod(
+            $this, strtolower($request->getMethod()));
+
+        if ($argc > count($reflectedMethod->getParameters())) {
+            throw new DispatchingException('Not enough arguments',
+                new Error404Response());
         }
 
-        array_unshift($params, $request);
-        if ($failSilent) {
-            set_error_handler(function() {
-                throw new \Exception('Hacky exception to hide the CI ' .
-                    'error handler message');
-            });
-            try {
-                // dispatch and get the response
-                $response = call_user_func_array(array(
-                    $this, strtolower($request->getMethod())), $params);
-            } catch (\Exception $ex) {
-                log_message('debug', '404 due to ' . $ex->getMessage());
-                return new Error404Response();
-            }
-            restore_error_handler();
-        } else {
-            // dispatch and get the response
-            $response = call_user_func_array(array(
-                $this, strtolower($request->getMethod())), $params);
+        $response = call_user_func_array(array(
+            $this, strtolower($request->getMethod())), $args);
+
+        if (!$response instanceof HttpResponseInterface) {
+            throw new DispatchingException(
+                'response must implement HttpResponseInterface',
+                new Error404Response());
         }
 
         return $response;
     }
 
+    /**
+     * The default handler for GET request.
+     * @param \Dispatcher\Http\HttpRequestInterface $request
+     * @return \Dispatcher\Http\HttpResponseInterface
+     */
     public function get(HttpRequestInterface $request)
     {
-        $data = call_user_func_array(
-            array($this, 'getContextData'),
-            func_get_args());
-        return $this->renderView($data);
+        return $this->renderView($this->getContextData($request));
     }
 
     /**
-     * Returns data according to the current context.
-     * @return array the data
+     * Gets the current context data for response.
+     * @return array The data in array
      */
     public function getContextData()
     {
         return array();
     }
 
+    /**
+     * Gets the views for view template response.
+     * @return array
+     * @throws \Dispatcher\Exception\DispatchingException When there is no views property defined
+     */
     protected function getViews()
     {
-        $views = is_array($this->views) ? $this->views : array($this->views);
+        $views = property_exists($this, 'views') ? $this->{'views'} : array();
+        $views = is_array($views) ? $views : array($views);
         if (empty($views)) {
-            show_error('Declare your views as protected ' .
-                       '$views = array("index") or "index"');
+            throw new DispatchingException('No views defined.',
+                new Error404Response());
         }
         return $views;
     }
 
+    /**
+     * Creates a {@link \Dispatcher\Http\ViewTemplateResponse}.
+     * @param array $data
+     * @param int $statusCode
+     * @return \Dispatcher\Http\HttpResponseInterface
+     */
     protected function renderView(array $data = array(), $statusCode = 200)
     {
-        return ViewTemplateResponse::create($statusCode)
-            ->setData($data)
-            ->setViews($this->getViews());
+        return new ViewTemplateResponse($this->getViews(), $statusCode, $data);
     }
 
+    /**
+     * Creates a {@link \Dispatcher\Http\RawHtmlResponse}.
+     * @param string $html
+     * @param int $statusCode
+     * @return \Dispatcher\Http\HttpResponseInterface
+     */
     protected function renderHtml($html = '', $statusCode = 200)
     {
-        return RawHtmlResponse::create($statusCode, $html);
+        return new RawHtmlResponse($statusCode, $html);
     }
 
-    protected function renderJson($data = NULL, $statusCode = 200)
+    /**
+     * Creates a {@link \Dispatcher\Http\JsonResponse}.
+     * @param mixed $data
+     * @param int $statusCode
+     * @return \Dispatcher\Http\HttpResponseInterface
+     */
+    protected function renderJson($data = null, $statusCode = 200)
     {
-        return JsonResponse::create($statusCode)->setData($data);
+        return new JsonResponse($statusCode, $data);
     }
 }
