@@ -1,7 +1,7 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Http;
 
-abstract class HttpResponse implements HttpResponseInterface
+class HttpResponse implements HttpResponseInterface
 {
     protected $statusCode;
     protected $content;
@@ -9,16 +9,9 @@ abstract class HttpResponse implements HttpResponseInterface
     protected $cookies;
     protected $headers;
 
-    public static function create($statusCode = 200,
-                                  $content = '',
-                                  $headers = array())
-    {
-        return new static($statusCode, $content, $headers);
-    }
-
     public function __construct($statusCode = 200,
                                 $content = '',
-                                $headers = array())
+                                array $headers = array())
     {
         $this->setStatusCode($statusCode)
              ->setContentType('text/html')

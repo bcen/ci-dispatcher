@@ -1,10 +1,16 @@
 <?php
 namespace Dispatcher;
 
+use Dispatcher\Http\HttpRequestInterface;
+use Dispatcher\Http\RawHtmlResponse;
+use Dispatcher\Exception\DispatchingException;
+use Dispatcher\Common\DefaultResourceOptions;
+use Dispatcher\Common\ResourceOptionsInterface;
+
 abstract class DispatchableResource implements DispatchableInterface
 {
     /**
-     * @var \Dispatcher\DefaultResourceOptions
+     * @var \Dispatcher\Common\DefaultResourceOptions
      */
     private $options;
 

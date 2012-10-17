@@ -1,8 +1,9 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Common;
 
 use Closure;
 use InvalidArgumentException;
+use ArrayAccess;
 
 /**
  * This is a copy cat of Pimple {@link http://pimple.sensiolabs.org/}.
@@ -26,7 +27,7 @@ use InvalidArgumentException;
  * $another = $container['anotherLogger'];
  * </code>
  */
-class DIContainer implements \ArrayAccess
+class DIContainer implements ArrayAccess
 {
     /**
      * @var array

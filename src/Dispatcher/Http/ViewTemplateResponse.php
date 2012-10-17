@@ -1,9 +1,18 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Http;
 
 class ViewTemplateResponse extends HttpResponse
 {
     private $views = array();
+
+    public function __construct(array $views,
+                                $statusCode = 200,
+                                $content = '',
+                                array $headers = array())
+    {
+        parent::__construct($statusCode, $content, $headers);
+        $this->setViews($views);
+    }
 
     public function getViews()
     {

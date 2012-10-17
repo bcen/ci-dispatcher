@@ -1,5 +1,5 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Common;
 
 class DefaultResourceOptions implements ResourceOptionsInterface
 {
@@ -31,7 +31,7 @@ class DefaultResourceOptions implements ResourceOptionsInterface
             return $this->options['defaultFormat'];
         }
 
-        return 'json';
+        return 'application/json';
     }
 
     public function setDefaultFormat($format)

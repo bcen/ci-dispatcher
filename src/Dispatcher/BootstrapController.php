@@ -6,12 +6,22 @@ use Exception;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionException;
+use CI_Controller;
+
+use Dispatcher\Http\HttpRequestInterface;
+use Dispatcher\Http\HttpResponseInterface;
+use Dispatcher\Http\HttpRequest;
+use Dispatcher\Http\Error404Response;
+use Dispatcher\Common\DIContainer;
+use Dispatcher\Common\ClassInfo;
+use Dispatcher\Common\CodeIgniterAware;
+use Dispatcher\Exception\DispatchingException;
 
 /**
  * Re-routes incoming uri to class based controller instead of CI's default
  * function based controller
  */
-class BootstrapController extends \CI_Controller
+class BootstrapController extends CI_Controller
 {
     /**
      * Array of middlewares to handle before and after the dispatch.
@@ -27,7 +37,7 @@ class BootstrapController extends \CI_Controller
 
     /**
      * Dependency injection container (IoC)
-     * @var DIContainer
+     * @var \Dispatcher\Common\DIContainer
      */
     private $_container;
 
@@ -38,7 +48,7 @@ class BootstrapController extends \CI_Controller
      * @param $method string The CodeIgniter controller function to be called.
      * @param $uri    array  Array of uri segments
      * @throws \Exception Exception thrown if request does not implement
-     *                    {@link \Dispatcher\HttpRequestInterface}
+     *                    {@link \Dispatcher\Http\HttpRequestInterface}
      */
     public function _remap($method, $uri)
     {
@@ -53,7 +63,7 @@ class BootstrapController extends \CI_Controller
         $middlewares = $this->loadMiddlewares();
         foreach ($middlewares as $m) {
             if (method_exists($m, 'processRequest')) {
-                $m->processRequest($request);
+                $m->{'processRequest'}($request);
             }
         }
 
@@ -62,7 +72,7 @@ class BootstrapController extends \CI_Controller
 
         for ($i = count($middlewares) - 1; $i >= 0; $i--) {
             if (method_exists($middlewares[$i], 'processResponse')) {
-                $middlewares[$i]->processResponse($response);
+                $middlewares[$i]->{'processResponse'}($response);
             }
         }
 
@@ -103,8 +113,8 @@ class BootstrapController extends \CI_Controller
     }
 
     /**
-     * Creates the concrete {@link \Dispatcher\HttpRequestInterface} object.
-     * @return \Dispatcher\HttpRequestInterface
+     * Creates the concrete {@link \Dispatcher\Http\HttpRequestInterface} object.
+     * @return \Dispatcher\Http\HttpRequestInterface
      */
     protected function createHttpRequest()
     {
@@ -119,7 +129,7 @@ class BootstrapController extends \CI_Controller
     /**
      * Creates the DIContainer with the given configuration.
      * @param  array $config The dependency configuration
-     * @return \Dispatcher\DIContainer
+     * @return \Dispatcher\Common\DIContainer
      */
     protected function createContainer(array $config = array())
     {
@@ -152,11 +162,13 @@ class BootstrapController extends \CI_Controller
 
     /**
      * Dispatches the incoming request to the proper resource.
-     * <i>Note: Resource must implement {@link \Dispatcher\DispatchableInterface}</i>
-     * @param array                $uri     The incoming resource URI in array
-     * @param HttpRequestInterface $request The incoming request object
-     * @throws \Dispatcher\DispatchingException|\Exception
-     * @return \Dispatcher\HttpResponseInterface
+     * <i>Note: Resource must implement {@link \Dispatcher\Http\DispatchableInterface}</i>
+     *
+     * @param array                                 $uri     The incoming resource URI in array
+     * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request object
+     * @throws \Dispatcher\Exception\DispatchingException|\Exception|null
+     * @throws \Exception
+     * @return \Dispatcher\Http\HttpResponseInterface
      */
     protected function dispatch($uri, HttpRequestInterface $request)
     {
@@ -208,7 +220,7 @@ class BootstrapController extends \CI_Controller
 
     /**
      * Loads and returns an array of middleware instance.
-     * @return array(DispatchableMiddleware)
+     * @return array
      */
     protected function loadMiddlewares()
     {
@@ -246,7 +258,7 @@ class BootstrapController extends \CI_Controller
     {
         $path = APPPATH . 'controllers'; // default path to look for the class
 
-        $classInfo = NULL;
+        $classInfo = null;
 
         // We always take the first element in `$routes`
         // and try to see if the file exists with the same name
@@ -282,7 +294,7 @@ class BootstrapController extends \CI_Controller
      * <i>Note: The default implementation uses Reflection to inject
      * dependencies into constructor from the dependencies config.</i>
      *
-     * @param \Dispatcher\ClassInfo $classInfo
+     * @param \Dispatcher\Common\ClassInfo $classInfo
      * @return mixed The instance of the class, or null if failed
      */
     protected function loadClass(ClassInfo $classInfo)

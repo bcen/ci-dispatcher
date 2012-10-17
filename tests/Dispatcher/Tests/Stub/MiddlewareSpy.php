@@ -1,8 +1,8 @@
 <?php
 namespace Dispatcher\Tests\Stub;
 
-use Dispatcher\HttpRequestInterface;
-use Dispatcher\HttpResponseInterface;
+use Dispatcher\Http\HttpRequestInterface;
+use Dispatcher\Http\HttpResponseInterface;
 
 class MiddlewareSpy
 {

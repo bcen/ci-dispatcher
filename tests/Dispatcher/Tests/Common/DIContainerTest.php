@@ -1,10 +1,10 @@
 <?php
-namespace Dispatcher\Tests;
+namespace Dispatcher\Tests\Common;
 
 class DIContainerTest extends \PHPUnit_Framework_Testcase
 {
     /**
-     * @var \Dispatcher\DIContainer
+     * @var \Dispatcher\Common\DIContainer
      */
     private $container;
 
@@ -30,7 +30,7 @@ class DIContainerTest extends \PHPUnit_Framework_Testcase
             return $obj;
         };
 
-        $this->container = new \Dispatcher\DIContainer();
+        $this->container = new \Dispatcher\Common\DIContainer();
 
         foreach ($container as $k => $v) {
             $this->container[$k] = $v;

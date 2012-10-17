@@ -1,14 +1,17 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Exception;
 
-class DispatchingException extends \Exception
+use Exception;
+use Dispatcher\Http\HttpResponseInterface;
+
+class DispatchingException extends Exception
 {
     private $response;
 
     public function __construct($message,
                                 HttpResponseInterface $response,
                                 $code = 0,
-                                $exception = null)
+                                Exception $exception = null)
     {
         parent::__construct($message, $code, $exception);
         $this->setResponse($response);

@@ -1,5 +1,5 @@
 <?php
-namespace Dispatcher;
+namespace Dispatcher\Http;
 
 /**
  * Simple wrapper around CodeIgniter's Input class
@@ -33,69 +33,69 @@ class HttpRequest implements HttpRequestInterface
         return $this->_ci()->input->is_cli_request();
     }
 
-    public function GET($key = NULL, $default = NULL, $sanitize = FALSE)
+    public function get($key = null, $default = null, $sanitize = false)
     {
         return $this->_fetch(
             $this->_ci()->input->get($key, $sanitize), $default);
     }
 
-    public function POST($key = NULL, $default = NULL, $sanitize = FALSE)
+    public function post($key = null, $default = null, $sanitize = false)
     {
         return $this->_fetch(
             $this->_ci()->input->post($key, $sanitize), $default);
     }
 
-    public function PUT($key = NULL, $default = NULL, $sanitize = FALSE)
+    public function put($key = null, $default = null, $sanitize = false)
     {
         $params = array();
         parse_str(file_get_contents('php://input'), $params);
-        if ($key !== NULL && isset($params[$key])) {
+        if ($key !== null && isset($params[$key])) {
             return $params[$key];
-        } else if ($key !== NULL) {
+        } else if ($key !== null) {
             return $default;
         }
         return $params;
     }
 
-    public function DELETE($key = NULL, $default = NULL, $sanitize = FALSE)
+    public function delete($key = null, $default = null, $sanitize = false)
     {
-        return $this->PUT($key, $default, $sanitize);
+        return $this->put($key, $default, $sanitize);
     }
 
-    public function getParam($key, $default = NULL, $sanitize = FALSE)
+    public function getParam($key, $default = null, $sanitize = false)
     {
-        return $this->POST($key,
-            $this->GET($key, $default, $sanitize), $sanitize);
+        return $this->post($key,
+            $this->get($key, $default, $sanitize), $sanitize);
     }
 
-    public function getCookie($key, $default = NULL, $sanitize = TRUE)
+    public function getCookie($key, $default = null, $sanitize = true)
     {
         return $this->_fetch(
             $this->_ci()->input->cookie($key, $sanitize), $default);
     }
 
-    public function getHeader($key, $default = NULL)
+    public function getHeader($key, $default = null)
     {
         return $this->_fetch(
-            $this->_ci()->input->get_request_header($key, TRUE), $default);
+            $this->_ci()->input->get_request_header($key, true), $default);
     }
 
-    public function getServerParam($key, $default = NULL)
+    public function getServerParam($key, $default = null)
     {
         return $this->_fetch(
-            $this->_ci()->input->server($key, TRUE), $default);
+            $this->_ci()->input->server($key, true), $default);
     }
 
     public function getScheme()
     {
-        return $this->_ci()->input->server('HTTPS', TRUE) !== FALSE
+        return $this->_ci()->input->server('HTTPS', true) !== false
             ? 'HTTPS' : 'HTTP';
     }
 
     public function getContentType()
     {
         return $this->_fetch(
-            $this->_ci()->input->server('CONTENT_TYPE', TRUE), '');
+            $this->_ci()->input->server('CONTENT_TYPE', true), '');
     }
 
     public function getIp()
@@ -145,7 +145,7 @@ class HttpRequest implements HttpRequestInterface
 
     public function getFullUri()
     {
-        return $this->_ci()->input->server('REQUEST_URI', TRUE);
+        return $this->_ci()->input->server('REQUEST_URI', true);
     }
 
     public function getSession()
@@ -156,7 +156,7 @@ class HttpRequest implements HttpRequestInterface
 
     private function _fetch($value, $default)
     {
-        return $value !== FALSE ? $value : $default;
+        return $value !== false ? $value : $default;
     }
 
     private function _ci()
