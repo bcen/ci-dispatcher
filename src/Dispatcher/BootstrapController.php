@@ -47,8 +47,9 @@ class BootstrapController extends CI_Controller
      *
      * @param $method string The CodeIgniter controller function to be called.
      * @param $uri    array  Array of uri segments
-     * @throws \Exception Exception thrown if request does not implement
-     *                    {@link \Dispatcher\Http\HttpRequestInterface}
+     * @throws \Dispatcher\Exception\DispatchingException|\Exception|null
+     * @return void
+     * @link \Dispatcher\Http\HttpRequestInterface}
      */
     public function _remap($method, $uri)
     {
@@ -60,20 +61,34 @@ class BootstrapController extends CI_Controller
                 'Object must implements \Dispatcher\HttpRequestInterface');
         }
 
+        $exception = null;
         $middlewares = $this->loadMiddlewares();
-        foreach ($middlewares as $m) {
-            if (method_exists($m, 'processRequest')) {
-                $m->{'processRequest'}($request);
+
+        try {
+            foreach ($middlewares as $m) {
+                if (method_exists($m, 'processRequest')) {
+                    $m->{'processRequest'}($request);
+                }
             }
+
+            array_unshift($uri, $method);
+            $response = $this->dispatch($uri, $request);
+
+            for ($i = count($middlewares) - 1; $i >= 0; $i--) {
+                if (method_exists($middlewares[$i], 'processResponse')) {
+                    $middlewares[$i]->{'processResponse'}($response);
+                }
+            }
+        } catch (DispatchingException $ex) {
+            $exception = $ex;
+            $response = $ex->getResponse();
+        } catch (Exception $ex) {
+            $exception = $ex;
+            $response = new Error404Response();
         }
 
-        array_unshift($uri, $method);
-        $response = $this->dispatch($uri, $request);
-
-        for ($i = count($middlewares) - 1; $i >= 0; $i--) {
-            if (method_exists($middlewares[$i], 'processResponse')) {
-                $middlewares[$i]->{'processResponse'}($response);
-            }
+        if ($exception && $this->_debug) {
+            throw $exception;
         }
 
         $this->renderResponse($request, $response);
@@ -167,7 +182,6 @@ class BootstrapController extends CI_Controller
      * @param array                                 $uri     The incoming resource URI in array
      * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request object
      * @throws \Dispatcher\Exception\DispatchingException|\Exception|null
-     * @throws \Exception
      * @return \Dispatcher\Http\HttpResponseInterface
      */
     protected function dispatch($uri, HttpRequestInterface $request)
@@ -189,31 +203,14 @@ class BootstrapController extends CI_Controller
             return new Error404Response();
         }
 
-
         $exception = null;
 
         set_error_handler(function($errno, $errstr) {
             throw new Exception("$errno@$errstr");
         });
-        try {
-            $response = $controller->doDispatch(
-                $request, $classInfo->getParams());
-        } catch (DispatchingException $ex) {
-            $exception = $ex;
-            $response = $ex->getResponse();
-        } catch (Exception $ex) {
-            $exception = $ex;
-            $response = new Error404Response();
-        }
+        $response = $controller->doDispatch(
+            $request, $classInfo->getParams());
         restore_error_handler();
-
-        if ($exception) {
-            // When exception thrown,
-            // only re-throw in debug mode
-            if ($this->_debug) {
-                throw $exception;
-            }
-        }
 
         return $response;
     }
