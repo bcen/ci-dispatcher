@@ -2,7 +2,8 @@
 namespace Dispatcher;
 
 use Dispatcher\Http\HttpRequestInterface;
-use Dispatcher\Http\RawHtmlResponse;
+use Dispatcher\Http\HttpResponseInterface;
+use Dispatcher\Http\HttpResponse;
 use Dispatcher\Exception\DispatchingException;
 use Dispatcher\Common\DefaultResourceOptions;
 use Dispatcher\Common\ResourceOptionsInterface;
@@ -14,9 +15,31 @@ abstract class DispatchableResource implements DispatchableInterface
      */
     private $options;
 
-    public function get($bundle)
+    public function get(HttpRequestInterface $request, array $args = array())
     {
+        $bundle = array();
+
+        if (!empty($args) && $args[0] === 'schema') {
+        } elseif (!empty($args)) {
+        } else {
+            $objects = $this->readCollection($request, $args);
+            $bundle = $this->createBundle($request,
+                array('data' => array('objects' => $objects)));
+        }
+
+        // $this->applySortingOn($bundle);
+        // $this->applyPaginationOn($bundle);
+        // $this->applyDehydrationOn($bundle);
+
+        return $this->createResponse($bundle);
     }
+
+    abstract public function readObject(HttpRequestInterface $request,
+                                        $id,
+                                        array $args = array());
+
+    abstract public function readCollection(HttpRequestInterface $request,
+                                            array $args = array());
 
     public function doDispatch(HttpRequestInterface $request,
                                array $args = array())
@@ -25,6 +48,17 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->methodHandlerCheck($request);
         // $this->authenticationCheck($request);
         // $this->authorizationCheck($request);
+
+        $response = $this->{strtolower($request->getMethod())}(
+            $request, $args);
+
+        if (!$response instanceof HttpResponseInterface) {
+            throw new DispatchingException('Response must implement '
+                . 'Dispatcher\\Http\\HttpResponseInterface',
+                $this->createResponse(array('request' => $request)));
+        }
+
+        return $response;
     }
 
     protected function methodAccessCheck(HttpRequestInterface $request)
@@ -37,27 +71,41 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (empty($allowed)) {
             throw new DispatchingException('Method Not Allowed',
-                new RawHtmlResponse(405)); // Should be a resource response
+                new HttpResponse(405)); // Should be a resource response
         }
     }
 
     protected function methodHandlerCheck(HttpRequestInterface $request)
     {
-        if (!method_exists($this, $request->getMethod())) {
+        if (!method_exists($this, strtolower($request->getMethod()))) {
             throw new DispatchingException(
                 'No request method handler implemented for '
                 . $request->getMethod(),
-                new RawHtmlResponse(501)); // Should be a resource response
+                new HttpResponse(501)); // Should be a resource response
         }
     }
 
-    protected function mapMethodToAction(HttpRequestInterface $request,
-                                         array $args = array())
+    protected function authenticationCheck(HttpRequestInterface $request)
     {
-        $actionMaps = $this->getOptions()->getActionMaps();
-        $action = $actionMaps[strtoupper($request->getMethod())];
-        $type = count($args) >= 1 ? 'Object' : 'Collection';
-        return $action . $type;
+    }
+
+    protected function authorizationCheck(HttpRequestInterface $request)
+    {
+    }
+
+    protected function createResponse(array $bundle)
+    {
+        // $this->applySerializationOn($bundle);
+        $data = getattr($bundle['data']);
+        $content = json_encode($data);
+        return new HttpResponse(200, $content);
+    }
+
+    protected function createBundle(HttpRequestInterface $request,
+                                    array $kwargs = array())
+    {
+        $bundle = array_merge($kwargs, array('request' => $request));
+        return $bundle;
     }
 
     protected function getOptions()
