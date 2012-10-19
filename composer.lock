@@ -1,0 +1,33 @@
+{
+    "hash": "9c4b210e045c71948ad93b8fc1a62b74",
+    "packages": [
+
+    ],
+    "packages-dev": [
+        {
+            "name": "ellislab/codeigniter",
+            "version": "2.1.0",
+            "dist": {
+                "type": "zip",
+                "url": "http://codeigniter.com/download_files/reactor/CodeIgniter_2.1.0.zip",
+                "reference": null,
+                "shasum": null
+            },
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "classmap": [
+                    "application/",
+                    "system/"
+                ]
+            }
+        }
+    ],
+    "aliases": [
+
+    ],
+    "minimum-stability": "stable",
+    "stability-flags": [
+
+    ]
+}

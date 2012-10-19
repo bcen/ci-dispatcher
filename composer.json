@@ -14,7 +14,7 @@
         "psr-0": {
             "Dispatcher": "src/"
         },
-        "files": ["src/Dispatcher/Common/helpers.php"]
+        "files": ["src/Dispatcher/Common/Helpers.php"]
     },
     "require": {
         "php": ">=5.3.0"
