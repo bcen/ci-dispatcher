@@ -58,7 +58,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_Testcase
             ->will($this->returnValue(array()));
         $controller->expects($this->any())
             ->method('dispatch')
-            ->with($this->equalTo($completeUri))
+            ->with($this->anything(), $this->equalTo($completeUri))
             ->will($this->returnValue(new JsonResponse()));
         $controller->expects($this->any())
             ->method('renderResponse')

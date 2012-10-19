@@ -7,6 +7,7 @@ use ReflectionClass;
 use ReflectionMethod;
 use ReflectionException;
 use CI_Controller;
+use InvalidArgumentException;
 
 use Dispatcher\Http\HttpRequestInterface;
 use Dispatcher\Http\HttpResponseInterface;
@@ -39,20 +40,19 @@ class BootstrapController extends CI_Controller
      * Dependency injection container (IoC)
      * @var \Dispatcher\Common\DIContainer
      */
-    private $_container;
+    protected $container;
 
     /**
-     * This will be called by CodeIgniter.php to remap to user defined function.
-     * <i>Note: We'll use this to remap to our class-based controller.</i>
+     * This is the main entry point of the CI-Dispatcher plugin.
+     * <i>Note: The life cycle of this class wil be managed/called by CodeIgniter.php</i>
      *
-     * @param $method string The CodeIgniter controller function to be called.
-     * @param $uri    array  Array of uri segments
-     * @throws \Dispatcher\Exception\DispatchingException|\Exception|null
-     * @return void
-     * @link \Dispatcher\Http\HttpRequestInterface}
+     * @param string $method      The CodeIgniter controller function to be called.
+     * @param array  $uriSegments Uri segments
+     * @throws \Dispatcher\Exception\DispatchingException|\Exception
      */
-    public function _remap($method, $uri)
+    public function _remap($method, $uriSegments)
     {
+        // Initializes all configurations
         $this->initializeConfig();
 
         $request = $this->createHttpRequest();
@@ -61,19 +61,26 @@ class BootstrapController extends CI_Controller
                 'Object must implements \Dispatcher\HttpRequestInterface');
         }
 
-        $exception = null;
+        // for injection in middleware/controller constructor
+        $this->container['request'] = $request;
+
+        // loads up the middleware for pre/post dispatch
         $middlewares = $this->loadMiddlewares();
+        $exception = null;
 
         try {
+            // Pre-dispatch process
             foreach ($middlewares as $m) {
                 if (method_exists($m, 'processRequest')) {
                     $m->{'processRequest'}($request);
                 }
             }
 
-            array_unshift($uri, $method);
-            $response = $this->dispatch($uri, $request);
+            // Dispatches the request, and wait for response
+            array_unshift($uriSegments, $method);
+            $response = $this->dispatch($request, $uriSegments);
 
+            // Post-dispatch process
             for ($i = count($middlewares) - 1; $i >= 0; $i--) {
                 if (method_exists($middlewares[$i], 'processResponse')) {
                     $middlewares[$i]->{'processResponse'}($response);
@@ -87,6 +94,7 @@ class BootstrapController extends CI_Controller
             $response = new Error404Response();
         }
 
+        // if we are in debugging mode, lets throw the exception out
         if ($exception && $this->_debug) {
             throw $exception;
         }
@@ -94,6 +102,9 @@ class BootstrapController extends CI_Controller
         $this->renderResponse($request, $response);
     }
 
+    /**
+     * Initializes configurations from 'loadDispatcherConfig' and 'loadDependenciesCOnfig'.
+     */
     protected function initializeConfig()
     {
         $config = $this->loadDispatcherConfig();
@@ -101,7 +112,7 @@ class BootstrapController extends CI_Controller
             ? $config['middlewares'] : array();
         $this->_debug = isset($config['debug']) ? $config['debug'] : false;
 
-        $this->_container = $this->createContainer(
+        $this->container = $this->createContainer(
             $this->loadDependenciesConfig());
     }
 
@@ -136,7 +147,6 @@ class BootstrapController extends CI_Controller
         static $request = null;
         if ($request === null) {
             $request = new HttpRequest();
-            $this->_container['request'] = $request;
         }
         return $request;
     }
@@ -169,6 +179,11 @@ class BootstrapController extends CI_Controller
         return $container;
     }
 
+    /**
+     * Sends the response.
+     * @param Http\HttpRequestInterface $request
+     * @param Http\HttpResponseInterface $response
+     */
     protected function renderResponse(HttpRequestInterface $request,
                                       HttpResponseInterface $response)
     {
@@ -179,15 +194,15 @@ class BootstrapController extends CI_Controller
      * Dispatches the incoming request to the proper resource.
      * <i>Note: Resource must implement {@link \Dispatcher\Http\DispatchableInterface}</i>
      *
-     * @param array                                 $uri     The incoming resource URI in array
      * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request object
-     * @throws \Dispatcher\Exception\DispatchingException|\Exception|null
+     * @param array                                 $uriSegments     The uri segments
+     * @throws \Dispatcher\Exception\DispatchingException|\Exception
      * @return \Dispatcher\Http\HttpResponseInterface
      */
-    protected function dispatch($uri, HttpRequestInterface $request)
+    protected function dispatch(HttpRequestInterface $request, $uriSegments)
     {
         // gets the class infomation that we will be dispatching to
-        $classInfo = $this->loadClassInfoOn($uri);
+        $classInfo = $this->loadClassInfoOn($uriSegments);
 
         // 404 page if we cannot find any assocaited class info
         if ($classInfo === null) {
@@ -202,8 +217,6 @@ class BootstrapController extends CI_Controller
         if (!$controller instanceof DispatchableInterface) {
             return new Error404Response();
         }
-
-        $exception = null;
 
         set_error_handler(function($errno, $errstr) {
             throw new Exception("$errno@$errstr");
@@ -319,8 +332,8 @@ class BootstrapController extends CI_Controller
             $depName = $param->getName();
 
             try {
-                $deps[] = $this->_container[$param->getName()];
-            } catch (\InvalidArgumentException $ex) {
+                $deps[] = $this->container[$param->getName()];
+            } catch (InvalidArgumentException $ex) {
                 die("$depName is not found in your dependencies.php");
             }
         }
