@@ -3,7 +3,6 @@ namespace Dispatcher\Common;
 
 interface ResourceOptionsInterface
 {
-    public static function create();
     public function getAllowedMethods();
     public function setAllowedMethods(array $methods);
     public function getDefaultFormat();
