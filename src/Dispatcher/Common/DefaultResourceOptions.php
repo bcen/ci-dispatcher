@@ -27,17 +27,8 @@ class DefaultResourceOptions implements ResourceOptionsInterface
 
     public function getDefaultFormat()
     {
-        if (isset($this->options['defaultFormat'])) {
-            return $this->options['defaultFormat'];
-        }
-
-        return 'application/json';
-    }
-
-    public function setDefaultFormat($format)
-    {
-        $this->options['defaultFormat'] = $format;
-        return $this;
+        $formats = $this->getSupportedFormats();
+        return $formats[0];
     }
 
     public function getSupportedFormats()
@@ -46,14 +37,14 @@ class DefaultResourceOptions implements ResourceOptionsInterface
             return $this->options['supportedFormats'];
         }
 
-        return array($this->getDefaultFormat());
+        $this->options['supportedFormats'] = array('application/json');
+        return $this->options['supportedFormats'];
     }
 
     public function setSupportedFormats(array $formats)
     {
         if (count($formats) > 0) {
             $this->options['supportedFormats'] = $formats;
-            $this->setDefaultFormat($formats[0]);
         }
         return $this;
     }

@@ -6,7 +6,6 @@ interface ResourceOptionsInterface
     public function getAllowedMethods();
     public function setAllowedMethods(array $methods);
     public function getDefaultFormat();
-    public function setDefaultFormat($format);
     public function getSupportedFormats();
     public function setSupportedFormats(array $formats);
     public function getAllowedFields();
