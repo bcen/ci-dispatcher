@@ -93,12 +93,10 @@ abstract class DispatchableResource implements DispatchableInterface
     {
     }
 
-    protected function createResponse(array $bundle)
+    protected function createResponse(array &$bundle)
     {
-        // $this->applySerializationOn($bundle);
-        $data = getattr($bundle['data']);
-        $content = json_encode($data);
-        return new HttpResponse(200, $content);
+        $this->applySerializationOn($bundle);
+        return new HttpResponse(200, getattr($bundle['data'], ''));
     }
 
     protected function createBundle(HttpRequestInterface $request,
@@ -106,6 +104,11 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $bundle = array_merge($kwargs, array('request' => $request));
         return $bundle;
+    }
+
+    protected function applySerializationOn(array &$bundle)
+    {
+        $bundle['data'] = json_encode(getattr($bundle['data']));
     }
 
     protected function getOptions()
