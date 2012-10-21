@@ -14,11 +14,11 @@ class DispatchableResourceTest extends \PHPUnit_Framework_Testcase
             ->method('getMethod')
             ->will($this->returnValue('GET'));
 
-        $controller = $this->getMockForAbstractClass(
-            'Dispatcher\\DispatchableResource');
-        $controller->expects($this->any())
-            ->method('readCollection')
-            ->with($this->anything(), $this->isEmpty())
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readCollection'));
+        $controller->expects($this->any())->method('readCollection')
+            ->with($this->isInstanceOf(
+                'Dispatcher\\Http\\HttpRequestInterface'))
             ->will($this->returnValue(array(array('username' => 'someone'))));
 
         $response = $controller->get($reqMock);

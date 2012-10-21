@@ -22,7 +22,7 @@ abstract class DispatchableResource implements DispatchableInterface
         if (!empty($args) && $args[0] === 'schema') {
         } elseif (!empty($args)) {
         } else {
-            $objects = $this->readCollection($request, $args);
+            $objects = $this->{'readCollection'}($request);
             $bundle = $this->createBundle($request,
                 array('data' => array('objects' => $objects)));
         }
@@ -33,13 +33,6 @@ abstract class DispatchableResource implements DispatchableInterface
 
         return $this->createResponse($bundle);
     }
-
-    abstract public function readObject(HttpRequestInterface $request,
-                                        $id,
-                                        array $args = array());
-
-    abstract public function readCollection(HttpRequestInterface $request,
-                                            array $args = array());
 
     public function doDispatch(HttpRequestInterface $request,
                                array $args = array())
