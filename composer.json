@@ -1,4 +1,4 @@
-﻿{
+{
     "name": "bcen/ci-dispatcher",
     "description": "A CodeIgniter plugin for more restful controller",
     "keywords": ["RESTful", "Controller", "CodeIgniter"],
