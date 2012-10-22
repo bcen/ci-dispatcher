@@ -23,12 +23,13 @@ abstract class DispatchableResource implements DispatchableInterface
         } elseif (!empty($args)) {
         } else {
             $objects = $this->{'readCollection'}($request);
+            $objects = is_array($objects) ? $objects : array();
             $bundle = $this->createBundle($request,
-                array('data' => array('objects' => $objects)));
+                array('objects' => $objects));
         }
 
         // $this->applySortingOn($bundle);
-        // $this->applyPaginationOn($bundle);
+        $this->applyPaginationOn($bundle);
         // $this->applyDehydrationOn($bundle);
 
         return $this->createResponse($bundle);
@@ -93,14 +94,32 @@ abstract class DispatchableResource implements DispatchableInterface
     }
 
     protected function createBundle(HttpRequestInterface $request,
+                                    array $data = array(),
                                     array $kwargs = array())
     {
-        $bundle = array_merge($kwargs, array('request' => $request));
+        $bundle = array_merge($kwargs, array(
+            'request' => $request,
+            'data' => $data
+        ));
         return $bundle;
+    }
+
+    protected function applyPaginationOn(array &$bundle)
+    {
+        // TODO: do the pagnation
+        // meta info should be coming from the options
+        $meta = array(
+            'offset' => 0,
+            'limit' => 20,
+            'total' => count(getattr($bundle['data']['objects'], array()))
+        );
+        $bundle['data'] = array_merge(
+            array('meta' => $meta), getattr($bundle['data']));
     }
 
     protected function applySerializationOn(array &$bundle)
     {
+        // TODO: detect accept header and serialize to that format
         $bundle['data'] = json_encode(getattr($bundle['data']));
     }
 
