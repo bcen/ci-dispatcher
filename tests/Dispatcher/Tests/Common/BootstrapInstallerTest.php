@@ -3,7 +3,7 @@ namespace Dispatcher\Tests\Common;
 
 use Dispatcher\Common\BootstrapInstaller;
 
-class BootstrapInstallerTest extends \PHPUnit_Framework_Testcase
+class BootstrapInstallerTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @test

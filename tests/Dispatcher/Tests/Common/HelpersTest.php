@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Tests\Common;
 
-class HelpersTest extends \PHPUnit_Framework_Testcase
+class HelpersTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @test

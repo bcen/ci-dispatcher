@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Tests\Common;
 
-class DIContainerTest extends \PHPUnit_Framework_Testcase
+class DIContainerTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var \Dispatcher\Common\DIContainer

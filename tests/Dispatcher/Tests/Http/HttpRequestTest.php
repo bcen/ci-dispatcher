@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Tests;
 
-class HttpRequestTest extends \PHPUnit_Framework_Testcase
+class HttpRequestTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var \Dispatcher\Http\HttpRequestInterface

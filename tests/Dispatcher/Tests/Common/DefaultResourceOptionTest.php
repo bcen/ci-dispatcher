@@ -3,7 +3,7 @@ namespace Dispatcher\Tests\Common;
 
 use Dispatcher\Common\DefaultResourceOptions;
 
-class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
+class DefaultResourceOptionTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @test

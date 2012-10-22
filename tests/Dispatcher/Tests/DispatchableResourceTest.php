@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Tests;
 
-class DispatchableResourceTest extends \PHPUnit_Framework_Testcase
+class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @test

@@ -4,7 +4,7 @@ namespace Dispatcher\Tests;
 use Dispatcher\Http\JsonResponse;
 use Dispatcher\Exception\DispatchingException;
 
-class DispatchableControllerTest extends \PHPUnit_Framework_Testcase
+class DispatchableControllerTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @test
