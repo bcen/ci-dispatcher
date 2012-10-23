@@ -94,7 +94,7 @@ class DispatchableControllerTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function doDispatch_WithoutExpectedParams_ShouldThrowDispatchingExceptionWith404ErrorResponse()
+    public function doDispatch_WithoutExpectedParams_ShouldReturn404ErrorResponse()
     {
         $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
             array('getMethod'));
@@ -108,15 +108,8 @@ class DispatchableControllerTest extends \PHPUnit_Framework_TestCase
             $this->isInstanceOf('Dispatcher\\Http\\HttpRequestInterface'))
             ->will($this->returnValue(new JsonResponse()));
 
-        try {
-            $controller->doDispatch($requestMock, array());
-        } catch (DispatchingException $ex) {
-            $response = $ex->getResponse();
-            $this->assertEquals(404, $response->getStatusCode());
-            return;
-        }
-
-        $this->fail('Expected Dispatcher\\Exception\\DispatchingException');
+        $response = $controller->doDispatch($requestMock, array());
+        $this->assertEquals(404, $response->getStatusCode());
     }
 
     /**

@@ -39,8 +39,7 @@ abstract class DispatchableController implements DispatchableInterface
         }
 
         if ($argc > count($reflectedMethod->getParameters())) {
-            throw new DispatchingException('Not enough arguments',
-                new Error404Response());
+            return new Error404Response();
         }
 
         $response = call_user_func_array(array(
