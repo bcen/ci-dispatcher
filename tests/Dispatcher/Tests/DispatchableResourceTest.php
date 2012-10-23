@@ -5,7 +5,8 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
 {
     public function mockRequest($method)
     {
-        $mock = $this->getMock('Dispatcher\\Http\\HttpRequest');
+        $mock = $this->getMock('Dispatcher\\Http\\HttpRequest',
+            array('getMethod'));
         $mock->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue($method));
