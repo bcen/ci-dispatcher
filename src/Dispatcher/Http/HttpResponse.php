@@ -98,6 +98,6 @@ class HttpResponse implements HttpResponseInterface
 
     protected function sendBody(HttpRequestInterface $request)
     {
-        $this->getCI()->output->set_output('');
+        $this->getCI()->output->set_output($this->getContent());
     }
 }

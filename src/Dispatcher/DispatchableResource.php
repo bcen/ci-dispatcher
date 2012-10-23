@@ -90,7 +90,9 @@ abstract class DispatchableResource implements DispatchableInterface
     protected function createResponse(array &$bundle)
     {
         $this->applySerializationOn($bundle);
-        return new HttpResponse(200, getattr($bundle['data'], ''));
+        $response = new HttpResponse(200, getattr($bundle['data'], ''));
+        $response->setContentType('application/json');
+        return $response;
     }
 
     protected function createBundle(HttpRequestInterface $request,
