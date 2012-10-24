@@ -83,4 +83,34 @@ class DefaultResourceOptions implements ResourceOptionsInterface
         $this->options['actionMaps'] = $actionMaps;
         return $this;
     }
+
+    public function getPaginatorClass()
+    {
+        if (isset($this->options['paginator'])) {
+            return $this->options['paginator'];
+        }
+
+        return 'Dispatcher\\Common\\ObjectPaginator';
+    }
+
+    public function setPaginatorClass($paginatorClass)
+    {
+        $this->options['paginator'] = $paginatorClass;
+        return $this;
+    }
+
+    public function getPageLimit()
+    {
+        if (isset($this->options['pageLimit'])) {
+            return $this->options['pageLimit'];
+        }
+
+        return 20;
+    }
+
+    public function setPageLimit($limit)
+    {
+        $this->options['pageLimit'] = $limit;
+        return $this;
+    }
 }
