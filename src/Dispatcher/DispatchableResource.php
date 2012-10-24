@@ -22,8 +22,14 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (count($args) === 1 && $args[0] === 'schema') {
         } elseif (!empty($args)) {
+            $method = 'readObject';
+            $this->methodCheck($method, $bundle);
+
+            $object = $this->$method($request, $args);
+            $bundle['data'] = $object;
         } else {
             $method = 'readCollection';
+            $this->methodCheck($method, $bundle);
 
             $objects = $this->$method($request);
             $objects = is_array($objects) ? $objects : array();
@@ -166,5 +172,17 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $this->options = $options;
         return $this;
+    }
+
+    private function methodCheck($method, $bundle)
+    {
+        if (!method_exists($this, $method)) {
+            $bundle['data'] = array('error' => 'Server Side Error');
+            $response = $this->createResponse(
+                $bundle, array('statusCode' => 500));
+            throw new DispatchingException(
+                "Please implement $method",
+                $response);
+        }
     }
 }
