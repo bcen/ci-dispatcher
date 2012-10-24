@@ -51,16 +51,16 @@ abstract class DispatchableResource implements DispatchableInterface
         // $this->authenticationCheck($request);
         // $this->authorizationCheck($request);
 
-        $response = $this->{strtolower($request->getMethod())}(
-            $request, $args);
+        $method = strtolower($request->getMethod());
+        $response = $method($request, $args);
 
         if (!$response instanceof HttpResponseInterface) {
             $bundle = $this->createBundle($request,
                 array('error' => 'Server Side Error'));
             $response = $this->createResponse($bundle,
-                array('statusCode' => 501));
+                array('statusCode' => 500));
             throw new DispatchingException(
-                'response must implement HttpResponseInterface', $response);
+                "$method must return HttpResponseInterface", $response);
         }
 
         return $response;
@@ -181,7 +181,7 @@ abstract class DispatchableResource implements DispatchableInterface
             $response = $this->createResponse(
                 $bundle, array('statusCode' => 500));
             throw new DispatchingException(
-                "Please implement $method",
+                "Please implement $method for your resource",
                 $response);
         }
     }
