@@ -26,10 +26,10 @@ abstract class DispatchableResource implements DispatchableInterface
             $objects = is_array($objects) ? $objects : array();
             $bundle = $this->createBundle($request,
                 array('objects' => $objects));
+            $this->applyPaginationOn($bundle);
+            // $this->applySortingOn($bundle);
         }
 
-        // $this->applySortingOn($bundle);
-        $this->applyPaginationOn($bundle);
         // $this->applyDehydrationOn($bundle);
 
         return $this->createResponse($bundle);
@@ -108,13 +108,20 @@ abstract class DispatchableResource implements DispatchableInterface
 
     protected function applyPaginationOn(array &$bundle)
     {
-        // TODO: do the pagnation
-        // meta info should be coming from the options
+        $paginatorClass = $this->getOptions()->getPaginatorClass();
+        $limit = $this->getOptions()->getPageLimit();
+        $offset = $bundle['request']->get('offset', 0);
+        $paginator = new $paginatorClass(
+            getattr($bundle['data']['objects'], array()), $offset, $limit);
+
+        $bundle['data']['objects'] = $paginator->getPage();
+
         $meta = array(
-            'offset' => 0,
-            'limit' => 20,
-            'total' => count(getattr($bundle['data']['objects'], array()))
+            'offset' => $offset,
+            'limit' => $limit,
+            'total' => $paginator->getCount()
         );
+
         $bundle['data'] = array_merge(
             array('meta' => $meta), getattr($bundle['data']));
     }
