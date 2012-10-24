@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Common;
 
-class ObjectPaginator
+class ObjectPaginator implements PaginatorInterface
 {
     private $objects;
     private $offset;
