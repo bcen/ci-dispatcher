@@ -109,8 +109,9 @@ abstract class DispatchableResource implements DispatchableInterface
     protected function applyPaginationOn(array &$bundle)
     {
         $paginatorClass = $this->getOptions()->getPaginatorClass();
-        $limit = $this->getOptions()->getPageLimit();
-        $offset = $bundle['request']->get('offset', 0);
+        $limit = (int)$bundle['request']->get('limit',
+            $this->getOptions()->getPageLimit());
+        $offset = (int)$bundle['request']->get('offset', 0);
         $paginator = new $paginatorClass(
             getattr($bundle['data']['objects'], array()), $offset, $limit);
 
@@ -118,8 +119,8 @@ abstract class DispatchableResource implements DispatchableInterface
 
         $meta = array(
             'offset' => $offset,
-            'limit' => $limit,
-            'total' => $paginator->getCount()
+            'limit'  => $limit,
+            'total'  => $paginator->getCount()
         );
 
         $bundle['data'] = array_merge(
