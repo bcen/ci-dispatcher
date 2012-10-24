@@ -4,6 +4,7 @@ namespace Dispatcher;
 use Dispatcher\Http\HttpRequestInterface;
 use Dispatcher\Http\HttpResponseInterface;
 use Dispatcher\Http\HttpResponse;
+use Dispatcher\Http\Exception\HttpErrorException;
 use Dispatcher\Exception\DispatchingException;
 use Dispatcher\Common\DefaultResourceOptions;
 use Dispatcher\Common\ResourceOptionsInterface;
@@ -17,15 +18,16 @@ abstract class DispatchableResource implements DispatchableInterface
 
     public function get(HttpRequestInterface $request, array $args = array())
     {
-        $bundle = array();
+        $bundle = $this->createBundle($request);
 
-        if (!empty($args) && $args[0] === 'schema') {
+        if (count($args) === 1 && $args[0] === 'schema') {
         } elseif (!empty($args)) {
         } else {
-            $objects = $this->{'readCollection'}($request);
+            $method = 'readCollection';
+
+            $objects = $this->$method($request);
             $objects = is_array($objects) ? $objects : array();
-            $bundle = $this->createBundle($request,
-                array('objects' => $objects));
+            $bundle['data']['objects'] = $objects;
             $this->applyPaginationOn($bundle);
             // $this->applySortingOn($bundle);
         }
@@ -46,12 +48,6 @@ abstract class DispatchableResource implements DispatchableInterface
         $response = $this->{strtolower($request->getMethod())}(
             $request, $args);
 
-        if (!$response instanceof HttpResponseInterface) {
-            throw new DispatchingException('Response must implement '
-                . 'Dispatcher\\Http\\HttpResponseInterface',
-                $this->createResponse(array('request' => $request)));
-        }
-
         return $response;
     }
 
@@ -64,18 +60,26 @@ abstract class DispatchableResource implements DispatchableInterface
         });
 
         if (empty($allowed)) {
-            throw new DispatchingException('Method Not Allowed',
-                new HttpResponse(405)); // Should be a resource response
+            $bundle = $this->createBundle($request,
+                array('error' => 'Method Not Allowed'));
+            $response = $this->createResponse($bundle,
+                array('statusCode' => 405));
+
+            throw new HttpErrorException('Method Not Allowed', $response);
         }
     }
 
     protected function methodHandlerCheck(HttpRequestInterface $request)
     {
         if (!method_exists($this, strtolower($request->getMethod()))) {
-            throw new DispatchingException(
+            $bundle = $this->createBundle($request,
+                array('error' => 'Not Implemented'));
+            $response = $this->createResponse($bundle,
+                array('statusCode' => 501));
+
+            throw new HttpErrorException(
                 'No request method handler implemented for '
-                . $request->getMethod(),
-                new HttpResponse(501)); // Should be a resource response
+                . $request->getMethod(), $response);
         }
     }
 
@@ -87,16 +91,23 @@ abstract class DispatchableResource implements DispatchableInterface
     {
     }
 
-    protected function createResponse(array &$bundle)
+    protected function createResponse(array $bundle,
+                                      array $kwargs = array())
     {
         $this->applySerializationOn($bundle);
-        $response = new HttpResponse(200, getattr($bundle['data'], ''));
+
+        $statusCode = getattr($kwargs['statusCode'], 200);
+        $headers = getattr($kwargs['headers'], array());
+
+        $response = new HttpResponse(
+            $statusCode, getattr($bundle['data'], ''), $headers);
         $response->setContentType('application/json');
+
         return $response;
     }
 
     protected function createBundle(HttpRequestInterface $request,
-                                    array $data = array(),
+                                    $data = null,
                                     array $kwargs = array())
     {
         $bundle = array_merge($kwargs, array(
