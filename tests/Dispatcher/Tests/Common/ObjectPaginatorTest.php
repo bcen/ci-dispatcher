@@ -24,7 +24,7 @@ class ObjectPaginatorTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function getPage_OnObjectsWith100CountAndDefaultOffset_ShouldReturnTheFirst20Objects()
+    public function getPage_With100ObjectAndDefaultParams_ShouldReturnTheFirst20Objects()
     {
         $paginator = new ObjectPaginator($this->objects);
         $objects = $paginator->getPage();
@@ -34,5 +34,28 @@ class ObjectPaginatorTest extends \PHPUnit_Framework_TestCase
         $last = array_pop($objects);
         $this->assertEquals(1, $first);
         $this->assertEquals(20, $last);
+    }
+
+    /**
+     * @test
+     */
+    public function getPage_AtSpecificOffset_ShouldReturnCorrectResults()
+    {
+        $paginator = new ObjectPaginator($this->objects, 5, 5);
+        $objects = $paginator->getPage();
+        $this->assertEquals(array(6, 7, 8, 9, 10), $objects);
+    }
+
+    /**
+     * @test
+     */
+    public function getPage_WithLargerCountOffset_ShouldReturnEmptyArray()
+    {
+        $paginator = new ObjectPaginator($this->objects, 5000);
+        $objects = $paginator->getPage();
+        $this->assertEmpty($objects);
+
+        $paginator->setOffset(2000);
+        $this->assertEmpty($paginator->getPage());
     }
 }
