@@ -13,6 +13,7 @@ use Dispatcher\Http\HttpRequestInterface;
 use Dispatcher\Http\HttpResponseInterface;
 use Dispatcher\Http\HttpRequest;
 use Dispatcher\Http\Error404Response;
+use Dispatcher\Http\Exception\HttpErrorException;
 use Dispatcher\Common\DIContainer;
 use Dispatcher\Common\ClassInfo;
 use Dispatcher\Common\CodeIgniterAware;
@@ -86,6 +87,8 @@ class BootstrapController extends CI_Controller
                     $middlewares[$i]->{'processResponse'}($response);
                 }
             }
+        } catch (HttpErrorException $ex) {
+            $response = $ex->getResponse();
         } catch (DispatchingException $ex) {
             $exception = $ex;
             $response = $ex->getResponse();
