@@ -1,7 +1,10 @@
 <?php
 namespace Dispatcher\Http\Exception;
 
-class HttpErrorException extends \Exception
+use Exception;
+use Dispatcher\Http\HttpResponseInterface;
+
+class HttpErrorException extends Exception
 {
     private $response;
 
