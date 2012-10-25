@@ -59,7 +59,7 @@ Installtion
 
 3. Run composer `php composer.phar install`
 
-4. Include `autoload.php` to your project and add this to `routes.php`
+4. Include `autoload.php` in your project and add this to `routes.php`
     ```php
     \Dispatcher\Common\BootstrapInstaller::run($route);
     ```
@@ -77,10 +77,20 @@ Features
 
 ##### Poor man's dependency injection #####
 
+Middlewares, DispatchableController and DispatchableResource will be injected
+by default.
+
 ```php
-// dependencies.php
+// config/dependencies.php
 $config['container']['userDao'] = function($container) {
     return new UserDao();
+};
+
+
+$config['container']['dsn'] = 'mydsn_string';
+// sharedContainer will return the same instance throughout the request/response cycle
+$config['sharedContainer']['pdo'] = function($container) {
+    return new PDO($container['dsn']);
 };
 
 // user_status.php
@@ -88,6 +98,8 @@ $config['container']['userDao'] = function($container) {
 
 class User_Status extends \Dispatcher\DispatchableController
 {
+    // CI-Dispatcher will inject $userDao from config/dependencies.php
+    // for you.
     public function __construct($userDao)
     {
         $userDao->findUserById(1);
@@ -114,13 +126,13 @@ class DebugFilter
 }
 ```
 
-`processRequest` and `processResponse` are optional, middleware can implement either or both
+`processRequest` and `processResponse` are optional, middleware can implement either one or both
 to alter the request/response cycle.
 
 
 ##### CodeIgniter Awareness #####
 
-Any class instantiation that is managed by the Dispatcher can implement `CodeIgniterAware`
+Any class that is created by the Dispatcher can implement `CodeIgniterAware`
 to have `CI` injection.
 
 E.g.
