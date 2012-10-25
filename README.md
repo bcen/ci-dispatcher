@@ -371,6 +371,16 @@ class Posts extends \Dispatcher\DispatchableController
 }
 ```
 
-## License
+Tests
+-----
+
+```
+$ composer.phar install --dev
+$ vendor/bin/phpunit
+```
+
+
+License
+-------
 
 CI-Dispatcher is released under the MIT public license.
