@@ -263,7 +263,7 @@ If it doesn't exists, then it will try for `application/controllers/blog/index.p
 
 ###### URI variable:  
 Sometime URI segments are not fixed, thus we cannot mapped to a directory or class. However,
-we can mapped to the function arguments of the request handler.
+we can mapp it to the function arguments of the request handler.
 
 E.g.
 `http://domain.com/blog/posts/this-is-a-crayz-blog-post-about-my-blog/` can be mapped to
@@ -306,3 +306,67 @@ $config['middlewares'] => array('debug_filter', 'auth_filter');
 ```
 `debug_filter` will be mapped to `application/middlewares/debug_filter.php` with the class name `Debug_Filter`.  
 `auth_filter` will be mapped to `application/middlewares/auth_filter.php` with the class name `Auth_Filter`.
+
+
+Controller Explained
+--------------------
+
+Any class lives under `application/controllers/` and extends `Dispatcher\DispatchableController` will be created
+and injected by the `CI-Dispatcher`.  
+
+E.g. 
+Assumes we are sending a `GET` request to `http://domain.com/blog/posts/special-post`.
+
+- `CI-Dispatcher` will map the URI to `application/blog/posts.php`
+- Creates a new instance of `Posts`
+- Invokes the method `get` with arguments: `Dispatcher\Http\HttpRequestInterface` and `'special-post'`
+- After getting the response object from `get`, then `CI-Dispatcher` will run through all the middlewares to process the response
+- Finally, send it to browser by invoking `send` on the `response` object
+
+
+##### At minimal #####
+```php
+<?php
+
+class Posts extends \Dispatcher\DispatchableController
+{
+    protected $views = 'post_view';
+}
+```
+
+By default, a `GET` request handler is provided, when `get` got invoked, it will load the views and data.  
+So when extending the `DispatchableController`, you only need to provide where the view files are by
+declaring `$views = 'post_view'` or as an array `$views = array('header', 'post_view', 'footer')`
+
+Overrides `getContextData` to send data to the view layer:
+```php
+<?php
+
+class Posts extends \Dispatcher\DispatchableController
+{
+    protected $views = 'post_view';
+
+    public function getContextData($request)
+    {
+        $posts = array();
+        return array('posts' => $posts);
+    }
+}
+```
+
+Overrides/implements `get`, `post`, `delete`, `put` and etc to take complete
+control of the request/response handling.
+```php
+<?php
+
+class Posts extends \Dispatcher\DispatchableController
+{
+    protected $views = 'post_view';
+
+    public function get($request)
+    {
+        // returns a ViewTemplateResponse
+        return $this->renderView(array('post' => $posts));
+    }
+}
+```
