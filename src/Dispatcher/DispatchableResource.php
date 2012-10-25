@@ -21,6 +21,9 @@ abstract class DispatchableResource implements DispatchableInterface
         $bundle = $this->createBundle($request);
 
         if (count($args) === 1 && $args[0] === 'schema') {
+//            $method = 'readSchema';
+//            $this->methodCheck($method, $bundle);
+
         } elseif (!empty($args)) {
             $method = 'readObject';
             $this->methodCheck($method, $bundle);
@@ -113,9 +116,9 @@ abstract class DispatchableResource implements DispatchableInterface
 
         $statusCode = getattr($kwargs['statusCode'], 200);
         $headers = getattr($kwargs['headers'], array());
+        $content = getattr($bundle['data'], '');
 
-        $response = new HttpResponse(
-            $statusCode, getattr($bundle['data'], ''), $headers);
+        $response = new HttpResponse($statusCode, $content, $headers);
         $response->setContentType('application/json');
 
         return $response;
@@ -156,7 +159,9 @@ abstract class DispatchableResource implements DispatchableInterface
     protected function applySerializationOn(array &$bundle)
     {
         // TODO: detect accept header and serialize to that format
-        $bundle['data'] = json_encode(getattr($bundle['data']));
+        $data = getattr($bundle['data'], '');
+        $bundle['data'] = (is_array($data) || is_object($data))
+            ? json_encode($data) : '';
     }
 
     protected function getOptions()
