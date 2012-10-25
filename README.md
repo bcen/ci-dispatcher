@@ -225,3 +225,38 @@ $config['container']['userDao'] = function($c) {
 Note:  
 `container` can have anonymous function or simple value like string, array, etc...  
 `sharedContainer` must contian only anonymous function.
+
+
+Conventions
+-----------
+
+##### URL to Controller mappings #####
+
+URL mapping convention follows almost excatly like CodeIgniter's default strategy.
+
+E.g.  
+`http://domain.com/` maps to `applications/controllers/index.php` with the class name `Index`  
+`http://domain.com/about_me` maps to `applications/controllers/about_me.php` with the class name `About_Me`
+
+###### Directory nesting:  
+`http://domain.com/blog` and `http://domain.com/blog/ajax/fetch_all_posts` can be mapped to:
+```
+application
+|
++-- blog
+    |-- index.php
+    +-- ajax
+        |
+        +-- fetch_all_posts.php
+
+```
+
+###### Mapping strategy:  
+CI-Dispatcher will search through each URI segments for the exact file name under `application/controllers`.
+If it doesn't exists, it will search `index.php` under that URI segments.
+
+E.g.  
+`http://domain.com/blog` has the URI segment: `blog`.  
+First CI-Dispatcher will search for `application/controllers/blog.php`.  
+If it doesn't exists, then it will try for `application/controllers/blog/index.php`.
+
