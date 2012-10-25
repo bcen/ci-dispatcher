@@ -16,30 +16,73 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function get_WithNoUriSegments_ShouldCallReadCollectionWithResults()
+    public function invoke_get_without_uri_segments_should_invoke_readCollection_with_request_as_argument()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock(
+            'Dispatcher\\DispatchableResource',
+            array('readCollection'));
+
+        $controller->expects($this->any())
+            ->method('readCollection')
+            ->with($this->isInstanceOf(
+                'Dispatcher\\Http\HttpRequestInterface'));
+
+
+        $controller->get($reqMock);
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_get_without_uri_segments_and_without_readCollection_should_throw_DispatchingException_with_response()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('some'));
+        $controller->expects($this->never())
+            ->method('some');
+
+        try {
+            $controller->get($reqMock);
+        } catch (\Dispatcher\Exception\DispatchingException $ex) {
+            $this->assertNotNull($ex->getResponse());
+            return;
+        }
+
+        $this->fail();
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_get_should_serialize_objects_from_readCollection_to_response_content()
     {
         $reqMock = $this->mockRequest('GET');
 
         $controller = $this->getMock('Dispatcher\\DispatchableResource',
             array('readCollection'));
+
         $controller->expects($this->any())
             ->method('readCollection')
-            ->with($this->isInstanceOf(
-                'Dispatcher\\Http\\HttpRequestInterface'))
             ->will($this->returnValue(array(
-                array('username' => 'someone'), array('username' => 'someoneelse'))));
+                array('username' => 'someone'),
+                array('username' => 'someoneelse'),
+                array('username' => 'anotherguy'))));
 
         $response = $controller->get($reqMock);
 
         $this->assertEquals(
-            '{"meta":{"offset":0,"limit":20,"total":2},"objects":[{"username":"someone"},{"username":"someoneelse"}]}',
+            '{"meta":{"offset":0,"limit":20,"total":3},"objects":[{"username":"someone"},{"username":"someoneelse"},{"username":"anotherguy"}]}',
             $response->getContent());
     }
 
     /**
      * @test
      */
-    public function get_WithPageLimit_ShouldReturnResultWithinTheLimit()
+    public function invoke_get_should_serialize_only_objects_from_readCollection_with_the_page_limits_to_response_content()
     {
         $reqMock = $this->mockRequest('GET');
 
@@ -48,14 +91,14 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
 
         $controller = $this->getMock('Dispatcher\\DispatchableResource',
             array('readCollection', 'getOptions'));
+
         $controller->expects($this->any())
             ->method('readCollection')
-            ->with($this->isInstanceOf(
-                'Dispatcher\\Http\\HttpRequestInterface'))
             ->will($this->returnValue(array(
-                array('username' => 'someone'),
-                array('username' => 'someoneelse'),
-                array('username' => 'anotherguy'))));
+                    array('username' => 'someone'),
+                    array('username' => 'someoneelse'),
+                    array('username' => 'anotherguy'))));
+
         $controller->expects($this->any())
             ->method('getOptions')
             ->will($this->returnValue($options));
