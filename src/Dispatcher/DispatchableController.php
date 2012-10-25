@@ -18,6 +18,7 @@ abstract class DispatchableController implements DispatchableInterface
     /**
      * Dispatches incoming request and returns a response back to caller.
      * Generally, this will be called by {@link \Dispatcher\BootstrapController}.
+     * <i>Note: Overrides this to have a custom dispatching schema.</i>
      *
      * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request
      * @param array                                 $args    Extra uri arguments
