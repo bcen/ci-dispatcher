@@ -192,26 +192,22 @@ $config['middlewares'] = array(
 $config['debug'] = true;
 ```
 
-`debug`:
-
-    Whether to show or hide debug information.
-    Set to `true` to show exception.
-    Set to `false` to return error 404 response when stuff gone wrong.
+`debug`:  
+Whether to show or hide debug information.  
+Set `true` to show exception, `false` to return error 404 response when stuff gone wrong.
 
 
-`middlewares`:
-
-    An array of middleware class(es) to be processed before/after dispatch.
-    When specifying the middlewares, it can be a fully qualified class name if it is autoloaded, otherwise
+`middlewares`:  
+An array of middleware class(es) to be processed before/after dispatch.  
+When specifying the middlewares, it can be a fully qualified class name if it is autoloaded, otherwise
 the class must live under `application/middlewares/` in order for CI-Dispatcher to load it (Note: naming convention applies).
 
 
 ##### dependencies.php #####
 
 This configuration file is used for `DIContainer` to load dependencies and inject them
-into Middlewares, DispatchableController and DispatchableResource's constructor.
-
-`DIContainer` is a copy cat of [`Pimple`](http://pimple.sensiolabs.org/).
+into Middlewares, DispatchableController and DispatchableResource's constructor.  
+Note: `DIContainer` is a copy cat of [`Pimple`](http://pimple.sensiolabs.org/).
 
 ```php
 <?php
@@ -226,8 +222,6 @@ $config['container']['userDao'] = function($c) {
 };
 ```
 
-Note:
-
-`container` can have anonymous function or simple value like string, array, etc...
-
+Note:  
+`container` can have anonymous function or simple value like string, array, etc...  
 `sharedContainer` must contian only anonymous function.
