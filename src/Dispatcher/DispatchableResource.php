@@ -52,7 +52,7 @@ abstract class DispatchableResource implements DispatchableInterface
         // $this->authorizationCheck($request);
 
         $method = strtolower($request->getMethod());
-        $response = $method($request, $args);
+        $response = $this->$method($request, $args);
 
         if (!$response instanceof HttpResponseInterface) {
             $bundle = $this->createBundle($request,
