@@ -4,7 +4,7 @@ namespace Dispatcher\Tests;
 use Dispatcher\Http\JsonResponse;
 use Dispatcher\Common\ClassInfo;
 
-class BootstrapControllerTest extends \PHPUnit_Framework_Testcase
+class BootstrapControllerTest extends \PHPUnit_Framework_TestCase
 {
     public function getUri()
     {
@@ -58,7 +58,7 @@ class BootstrapControllerTest extends \PHPUnit_Framework_Testcase
             ->will($this->returnValue(array()));
         $controller->expects($this->any())
             ->method('dispatch')
-            ->with($this->equalTo($completeUri))
+            ->with($this->anything(), $this->equalTo($completeUri))
             ->will($this->returnValue(new JsonResponse()));
         $controller->expects($this->any())
             ->method('renderResponse')

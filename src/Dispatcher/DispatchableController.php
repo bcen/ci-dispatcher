@@ -4,6 +4,7 @@ namespace Dispatcher;
 use Dispatcher\Exception\DispatchingException;
 use Dispatcher\Http\HttpRequestInterface;
 use Dispatcher\Http\HttpResponseInterface;
+use Dispatcher\Http\HttpResponse;
 use Dispatcher\Http\Error404Response;
 use Dispatcher\Http\ViewTemplateResponse;
 use Dispatcher\Http\JsonResponse;
@@ -15,24 +16,31 @@ use Dispatcher\Http\RawHtmlResponse;
 abstract class DispatchableController implements DispatchableInterface
 {
     /**
-     * Does the actual dispatching.
+     * Dispatches incoming request and returns a response back to caller.
+     * Generally, this will be called by {@link \Dispatcher\BootstrapController}.
+     * <i>Note: Overrides this to have a custom dispatching schema.</i>
+     *
      * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request
-     * @param array                                 $args    Extra arguments
+     * @param array                                 $args    Extra uri arguments
      * @throws \Dispatcher\Exception\DispatchingException
      * @return \Dispatcher\Http\HttpResponseInterface
      */
     public function doDispatch(HttpRequestInterface $request,
                                array $args = array())
     {
+        // number of expected arguments
         $argc = array_unshift($args, $request);
 
         // see what is the requested method, e.g. 'GET', 'POST' and etc...
-        $reflectedMethod = new \ReflectionMethod(
-            $this, strtolower($request->getMethod()));
+        try {
+            $reflectedMethod = new \ReflectionMethod(
+                $this, strtolower($request->getMethod()));
+        } catch (\ReflectionException $ex) {
+            return new HttpResponse(501);
+        }
 
         if ($argc > count($reflectedMethod->getParameters())) {
-            throw new DispatchingException('Not enough arguments',
-                new Error404Response());
+            return new Error404Response();
         }
 
         $response = call_user_func_array(array(

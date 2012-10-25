@@ -10,6 +10,19 @@
             "email": "bocai.cen@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-0": {
+            "Dispatcher": "src/"
+        },
+        "files": ["src/Dispatcher/Common/Helpers.php"]
+    },
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "require-dev": {
+        "ellislab/codeigniter": "2.1.0",
+        "phpunit/phpunit": "3.7.*"
+    },
     "repositories": [
         {
             "type": "package",
@@ -25,16 +38,5 @@
                 }
             }
         }
-    ],
-    "autoload": {
-        "psr-0": {
-            "Dispatcher": "src/"
-        }
-    },
-    "require": {
-        "php": ">=5.3.0"
-    },
-    "require-dev": {
-        "ellislab/codeigniter": "2.1.0"
-    }
+    ]
 }

@@ -3,7 +3,7 @@ namespace Dispatcher\Tests\Common;
 
 use Dispatcher\Common\DefaultResourceOptions;
 
-class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
+class DefaultResourceOptionTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @test
@@ -17,6 +17,9 @@ class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
         $this->assertEquals($expected, $options->getDefaultFormat());
     }
 
+    /**
+     * @test
+     */
     public function setSupportedFormats_WithAtLeastOneFormat_ShouldAlsoSetAsDefaultFormat()
     {
         $expected = 'application/yaml';
@@ -26,6 +29,9 @@ class DefaultResourceOptionTest extends \PHPUnit_Framework_Testcase
         $this->assertEquals($expected, $options->getDefaultFormat());
     }
 
+    /**
+     * @test
+     */
     public function setSupportedFormats_WithMultipleFormats_ShouldSetFirstFormatAsDefaultFormat()
     {
         $expected = 'application/yaml';

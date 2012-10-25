@@ -1,7 +1,7 @@
 <?php
 namespace Dispatcher\Tests;
 
-class HttpRequestTest extends \PHPUnit_Framework_Testcase
+class HttpRequestTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var \Dispatcher\Http\HttpRequestInterface
@@ -19,7 +19,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function isCli_InUnitTest_ShouldReturnTrue()
+    public function isCli_in_cli_should_return_true()
     {
         $this->assertTrue($this->request->isCli());
     }
@@ -27,7 +27,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function isAjax_InUnitTest_ShouldReturnFalse()
+    public function isAjax_in_cli_should_return_false()
     {
         $this->assertFalse($this->request->isAjax());
     }
@@ -35,7 +35,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getId_WithMultipleCall_ShouldReturnSameId()
+    public function invoke_getId_multiple_time_should_return_same_id()
     {
         $id = $this->request->getId();
 
@@ -46,7 +46,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getIp_OnInvalidHost_ShouldNotBeEmpty()
+    public function getIp_on_invalid_host_should_not_be_empty()
     {
         $this->assertNotEmpty($this->request->getIp());
     }
@@ -54,16 +54,16 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function GET_FromSuperGlobal_ShouldBeEqual()
+    public function fetch_get_from_super_globals_should_return_the_same_value_as_super_globals()
     {
         $_GET['var1'] = 'var1';
-        $this->assertEquals($_GET['var1'], $this->request->GET('var1'));
+        $this->assertEquals($_GET['var1'], $this->request->get('var1'));
     }
 
     /**
      * @test
      */
-    public function GET_OnInvalidKey_ShouldReturnDefaultValue()
+    public function fetch_get_with_invalid_key_should_return_default_value()
     {
         $defaultValue = 'asdf';
         $_GET['key'] = 'value';
@@ -75,7 +75,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function POST_FromSuperGlobal_ShouldBeEqual()
+    public function fetch_post_from_super_globals_should_return_the_same_value_as_super_globals()
     {
         $_POST['var1'] = 'var1';
         $this->assertEquals($_POST['var1'], $this->request->POST('var1'));
@@ -84,7 +84,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function POST_OnInvalidKey_ShouldReturnDefaultValue()
+    public function fetch_post_with_invalid_key_should_return_default_value()
     {
         $defaultValue = 'somevalue';
         $_POST['key'] = 'value';
@@ -95,7 +95,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getParam_FromSuperGlobal_ShouldHavePostPrecedence()
+    public function getParam_from_super_globals_should_have_POST_precedence_than_GET()
     {
         $expected = '2';
         $_GET['var1'] = '1';
@@ -106,7 +106,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getParam_WithSanitizeOnAmpersand_ShouldAppendSemiColon()
+    public function getParam_with_xss_clean_should_append_double_colon_to_output()
     {
         $_POST['key'] = '&thiswilldo';
         $this->assertEquals('&thiswilldo;',
@@ -116,7 +116,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getScheme_InUnitTest_ShouldReturnHttp()
+    public function getScheme_in_cli_should_return_HTTP()
     {
         $this->assertEquals('HTTP', $this->request->getScheme());
     }
@@ -124,7 +124,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getCookie_FromSuperGlobal_ShouldBeEqual()
+    public function getCookie_from_super_globals_should_return_same_value()
     {
         $_COOKIE['somecookie'] = 'value';
         $this->assertEquals('value', $this->request->getCookie('somecookie'));
@@ -133,7 +133,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getUserAgent_InUnitTest_ShouldBeEmpty()
+    public function getUserAgent_in_cli_should_return_empty_string()
     {
         $this->assertEquals('', $this->request->getUserAgent());
     }
@@ -141,7 +141,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getUri_InUnitTest_ShouldBeEmpty()
+    public function getUri_in_cli_should_be_empty()
     {
         $this->assertEmpty($this->request->getUri());
     }
@@ -149,7 +149,7 @@ class HttpRequestTest extends \PHPUnit_Framework_Testcase
     /**
      * @test
      */
-    public function getBaseUrl_InUnitTest_ShouldDefaultToLocalHost()
+    public function getBaseUrl_in_cli_should_return_value_defaults_to_localhost()
     {
 
         $this->assertEquals('http://localhost/', $this->request->getBaseUrl());
