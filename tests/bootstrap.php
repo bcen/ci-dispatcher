@@ -40,7 +40,12 @@ if (defined('ENVIRONMENT'))
     switch (ENVIRONMENT)
     {
         case 'development':
-            error_reporting(E_ALL ^ E_DEPRECATED);
+            $level = E_ALL;
+            if (version_compare(PHP_VERSION, '5.4.0') >= 0) {
+                error_reporting($level ^ E_STRICT);
+            } else {
+                error_reporting($level);
+            }
             break;
 
         case 'testing':
