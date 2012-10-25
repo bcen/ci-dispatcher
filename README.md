@@ -293,3 +293,16 @@ class Posts extends \Dispatcher\DispatchableController
 }
 ```
 Note: The request handler must accept at least one argument for the `Request` object.
+
+
+##### Middlewares #####
+
+If middlewares are not autoloaded by class loader like `composer`, they must live under
+`application/middlewares`.
+
+E.g.
+```php
+$config['middlewares'] => array('debug_filter', 'auth_filter');
+```
+`debug_filter` will be mapped to `application/middlewares/debug_filter.php` with the class name `Debug_Filter`.  
+`auth_filter` will be mapped to `application/middlewares/auth_filter.php` with the class name `Auth_Filter`.
