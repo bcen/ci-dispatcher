@@ -194,18 +194,15 @@ $config['debug'] = true;
 
 `debug`:
 
-Whether to show or hide debug information.
-
-Set to `true` to show exception.
-
-Set to `false` to return error 404 response when stuff gone wrong.
+    Whether to show or hide debug information.
+    Set to `true` to show exception.
+    Set to `false` to return error 404 response when stuff gone wrong.
 
 
 `middlewares`:
 
-An array of middleware class(es) to be processed before/after dispatch.
-
-When specifying the middlewares, it can be a fully qualified class name if it is autoloaded, otherwise
+    An array of middleware class(es) to be processed before/after dispatch.
+    When specifying the middlewares, it can be a fully qualified class name if it is autoloaded, otherwise
 the class must live under `application/middlewares/` in order for CI-Dispatcher to load it (Note: naming convention applies).
 
 
