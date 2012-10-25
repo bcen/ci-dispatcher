@@ -370,3 +370,7 @@ class Posts extends \Dispatcher\DispatchableController
     }
 }
 ```
+
+## License
+
+CI-Dispatcher is released under the MIT public license.
