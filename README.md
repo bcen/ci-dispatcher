@@ -235,13 +235,13 @@ Conventions
 URL mapping convention follows almost excatly like CodeIgniter's default strategy.
 
 E.g.  
-`http://domain.com/` maps to `applications/controllers/index.php` with the class name `Index`  
-`http://domain.com/about_me` maps to `applications/controllers/about_me.php` with the class name `About_Me`
+`http://domain.com/` maps to `application/controllers/index.php` with the class name `Index`  
+`http://domain.com/about_me` maps to `application/controllers/about_me.php` with the class name `About_Me`
 
 ###### Directory nesting:  
 `http://domain.com/blog` and `http://domain.com/blog/ajax/fetch_all_posts` can be mapped to:
 ```
-application
+controllers
 |
 +-- blog
     |-- index.php
