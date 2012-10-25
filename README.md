@@ -172,3 +172,54 @@ class DebugFilter implements \Dispatcher\Common\CodeIgniterAware
     }
 }
 ```
+
+
+Configurations
+--------------
+
+There are two configuration files, `config/dispatcher.php` and `dependencies.php`.
+
+##### dispatcher.php #####
+
+```php
+<?php
+
+$config['middlewares'] = array(
+    'MyProject\\Namespace\\Middlewares\\SomeFilter',
+    'debug_filter'
+);
+
+$config['debug'] = true;
+```
+
+Set `debug` to `true` for more debugging exception and helpful message.
+Set `debug` to `false` for error 404 response when stuff gone wrong.
+
+`middlewares` should be an array of class name that will be processed as middleware.
+
+When specifying the middlewares, it can be a fully qualified class name if it is autoloaded, otherwise
+the class must live under `application/middlewares/` in order for CI-Dispatcher to load it (Note: naming convention apply).
+
+
+##### dependencies.php #####
+
+This configuration file is used for `DIContainer` to load dependencies and inject
+into Middlewares, DispatchableController and DispatchableResource.
+`DIContainer` is a copy cat of [`Pimple`](http://pimple.sensiolabs.org/).
+
+```php
+<?php
+
+$config['container'] = array();
+$config['sharedContainer'] = array();
+
+
+$config['container']['dsnString'] = 'dsn:user@192.168.1.100';
+$config['container']['userDao'] = function($c) {
+    return new UserDao($c['dsnString']);
+};
+```
+
+Note:
+`container` can have anonymous function or simple value like string, array, etc...
+'sharedContainer' must contian only anonymous function.
