@@ -77,7 +77,8 @@ class HttpRequest implements HttpRequestInterface
     public function getHeader($key, $default = null)
     {
         return $this->_fetch(
-            $this->_ci()->input->get_request_header($key, true), $default);
+            $this->_ci()->input->get_request_header(ucfirst($key), true),
+            $default);
     }
 
     public function getServerParam($key, $default = null)
