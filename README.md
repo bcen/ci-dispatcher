@@ -260,3 +260,36 @@ E.g.
 First CI-Dispatcher will search for `application/controllers/blog.php`.  
 If it doesn't exists, then it will try for `application/controllers/blog/index.php`.
 
+
+###### URI variable:  
+Sometime URI segments are not fixed, thus we cannot mapped to a directory or class. However,
+we can mapped to the function arguments of the request handler.
+
+E.g.
+`http://domain.com/blog/posts/this-is-a-crayz-blog-post-about-my-blog/` can be mapped to
+`application/controllers/blog/posts.php` with the follow class:
+```php
+<?php
+
+class Posts extends \Dispatcher\DispatchableController
+{
+    protected $views = array('header', 'post_body', 'footer');
+
+    // request handler for GET
+    public function get($request, $slug)
+    {
+        $post = $posts->find($slug);
+        return $this->renderView(array('post' => $post);
+    }
+
+    // request handler for POST
+    // providing a default value means that that URI segment is optional.
+    // e.g. POST http://domain.com/blog/posts/some-slug
+    // or POST http://domain.com/blog/posts
+    public function post($request, $slug = null)
+    {
+        // do something and return response
+    }
+}
+```
+Note: The request handler must accept at least one argument for the `Request` object.
