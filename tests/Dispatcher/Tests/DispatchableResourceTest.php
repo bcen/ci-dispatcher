@@ -161,6 +161,27 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function get_for_readObject_should_have_correct_serialized_contents_in_response()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readObject'));
+
+        $controller->expects($this->once())
+            ->method('readObject')
+            ->will($this->returnValue(
+                array('username' => 'someone', 'id' => 5)));
+
+        $response = $controller->get($reqMock, array('id'));
+        $this->assertEquals(
+            '{"username":"someone","id":5}',
+            $response->getContent());
+    }
+
+    /**
+     * @test
+     */
     public function resource_not_found_in_readObject_should_have_404_in_response()
     {
         $reqMock = $this->mockRequest('GET');
@@ -180,5 +201,36 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
             '{"error":"Not Found"}',
             $response->getContent());
         $this->assertEquals(404, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_post_without_uri_segments_should_invoke_writeObject()
+    {
+        $reqMock = $this->mockRequest('POST');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('writeObject'));
+        $controller->expects($this->once())
+            ->method('writeObject');
+
+        $controller->post($reqMock);
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_post_with_uri_segments_should_return_method_not_allowed_response()
+    {
+        $reqMock = $this->mockRequest('POST');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('writeObject'));
+        $controller->expects($this->never())
+            ->method('writeObject');
+
+        $response = $controller->post($reqMock, array('someid'));
+        $this->assertEquals(405, $response->getStatusCode());
     }
 }

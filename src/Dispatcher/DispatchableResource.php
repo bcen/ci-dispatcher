@@ -36,7 +36,7 @@ abstract class DispatchableResource implements DispatchableInterface
                 $object = $this->$method($request, $id, $args);
                 $bundle['data'] = $object;
             } catch (ResourceNotFoundException $ex) {
-                $bundle['data'] = array('error' => 'Not Found');
+                $bundle['data']['error'] = 'Not Found';
 
                 return $this->createResponse(
                     $bundle, array('statusCode' => 404));
@@ -55,6 +55,22 @@ abstract class DispatchableResource implements DispatchableInterface
         // $this->applyDehydrationOn($bundle);
 
         return $this->createResponse($bundle);
+    }
+
+    public function post(HttpRequestInterface $request, array $args = array())
+    {
+        $bundle = $this->createBundle($request);
+
+        if (!empty($args)) {
+            $bundle['data']['error'] = 'Method Not Allowed';
+            return $this->createResponse($bundle, array('statusCode' => 405));
+        }
+
+        $method = 'writeObject';
+        $this->methodCheck($method, $bundle);
+        $bundle['data'] = $this->$method($request);
+
+        return $this->createResponse($bundle, array('statusCode' => 201));
     }
 
     public function doDispatch(HttpRequestInterface $request,
