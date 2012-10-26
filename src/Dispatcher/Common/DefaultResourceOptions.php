@@ -84,18 +84,22 @@ class DefaultResourceOptions implements ResourceOptionsInterface
         return $this;
     }
 
-    public function getPaginatorClass()
+    /**
+     * @return \Dispatcher\Common\ObjectPaginator
+     */
+    public function getPaginator()
     {
-        if (isset($this->options['paginator'])) {
-            return $this->options['paginator'];
+        if (!isset($this->options['paginator'])) {
+            $this->options['paginator'] =
+                new ObjectPaginator(0, $this->getPageLimit());
         }
 
-        return 'Dispatcher\\Common\\ObjectPaginator';
+        return $this->options['paginator'];
     }
 
-    public function setPaginatorClass($paginatorClass)
+    public function setPaginator(PaginatorInterface $paginator)
     {
-        $this->options['paginator'] = $paginatorClass;
+        $this->options['paginator'] = $paginator;
         return $this;
     }
 

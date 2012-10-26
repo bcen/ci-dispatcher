@@ -12,8 +12,8 @@ interface ResourceOptionsInterface
     public function setAllowedFields(array $fields);
     public function getActionMaps();
     public function setActionMaps(array $actionMaps);
-    public function getPaginatorClass();
-    public function setPaginatorClass($paginatorClass);
+    public function getPaginator();
+    public function setPaginator(PaginatorInterface $paginator);
     public function getPageLimit();
     public function setPageLimit($limit);
 }

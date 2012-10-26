@@ -3,15 +3,25 @@ namespace Dispatcher\Common;
 
 class ObjectPaginator implements PaginatorInterface
 {
-    private $objects;
+    private $objects = array();
     private $offset;
     private $limit;
 
-    public function __construct(array &$objects, $offset = 0, $limit = 20)
+    public function __construct($offset = 0, $limit = 20)
     {
-        $this->objects = &$objects;
         $this->setOffset($offset)
              ->setLimit($limit);
+    }
+
+    public function getObjects()
+    {
+        return $this->objects;
+    }
+
+    public function setObjects($objects)
+    {
+        $this->objects = $objects;
+        return $this;
     }
 
     public function getCount()

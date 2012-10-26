@@ -17,7 +17,8 @@ class ObjectPaginatorTest extends \PHPUnit_Framework_TestCase
      */
     public function getTotalCount_OnObjectInRange1To100_ShouldReturn100()
     {
-        $paginator = new ObjectPaginator($this->objects);
+        $paginator = new ObjectPaginator();
+        $paginator->setObjects($this->objects);
         $this->assertEquals(100, $paginator->getCount());
     }
 
@@ -26,7 +27,8 @@ class ObjectPaginatorTest extends \PHPUnit_Framework_TestCase
      */
     public function getPage_With100ObjectAndDefaultParams_ShouldReturnTheFirst20Objects()
     {
-        $paginator = new ObjectPaginator($this->objects);
+        $paginator = new ObjectPaginator();
+        $paginator->setObjects($this->objects);
         $objects = $paginator->getPage();
 
         $this->assertEquals(20, count($objects));
@@ -41,7 +43,8 @@ class ObjectPaginatorTest extends \PHPUnit_Framework_TestCase
      */
     public function getPage_AtSpecificOffset_ShouldReturnCorrectResults()
     {
-        $paginator = new ObjectPaginator($this->objects, 5, 5);
+        $paginator = new ObjectPaginator(5, 5);
+        $paginator->setObjects($this->objects);
         $objects = $paginator->getPage();
         $this->assertEquals(array(6, 7, 8, 9, 10), $objects);
     }
@@ -51,7 +54,8 @@ class ObjectPaginatorTest extends \PHPUnit_Framework_TestCase
      */
     public function getPage_WithLargerCountOffset_ShouldReturnEmptyArray()
     {
-        $paginator = new ObjectPaginator($this->objects, 5000);
+        $paginator = new ObjectPaginator(5000);
+        $paginator->setObjects($this->objects);
         $objects = $paginator->getPage();
         $this->assertEmpty($objects);
 

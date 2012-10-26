@@ -138,14 +138,17 @@ abstract class DispatchableResource implements DispatchableInterface
 
     protected function applyPaginationOn(array &$bundle)
     {
-        $paginatorClass = $this->getOptions()->getPaginatorClass();
-        $limit = (int)$bundle['request']->get('limit',
-            $this->getOptions()->getPageLimit());
-        $offset = (int)$bundle['request']->get('offset', 0);
-        $paginator = new $paginatorClass(
-            getattr($bundle['data']['objects'], array()), $offset, $limit);
+        $req = $bundle['request'];
 
+        $limit = (int)$req->get('limit', $this->getOptions()->getPageLimit());
+        $offset = (int)$req->get('offset', 0);
+
+        $paginator = $this->getOptions()->getPaginator();
+        $paginator->setObjects(getattr($bundle['data']['objects'], array()));
+        $paginator->setLimit($limit);
+        $paginator->setOffset($offset);
         $bundle['data']['objects'] = $paginator->getPage();
+
 
         $meta = array(
             'offset' => $offset,
