@@ -109,4 +109,39 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
             '{"meta":{"offset":0,"limit":1,"total":3},"objects":[{"username":"someone"}]}',
             $response->getContent());
     }
+
+    /**
+     * @test
+     */
+    public function invoke_get_with_schema_as_uri_argument_should_invoke_readSchema()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readSchema'));
+
+        $controller->expects($this->once())
+            ->method('readSchema')
+            ->will($this->returnValue(
+                array('username' => array('helpText' => 'something'))));
+
+        $controller->get($reqMock, array('schema'));
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_get_with_uri_arguments_should_invoke_readObject()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readObject'));
+
+        $controller->expects($this->once())
+            ->method('readObject')
+            ->will($this->returnValue(null));
+
+        $controller->get($reqMock, array('some-id'));
+    }
 }
