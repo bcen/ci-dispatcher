@@ -38,8 +38,8 @@ abstract class DispatchableResource implements DispatchableInterface
             $objects = $this->$method($request);
             $objects = is_array($objects) ? $objects : array();
             $bundle['data']['objects'] = $objects;
-            $this->applyPaginationOn($bundle);
             // $this->applySortingOn($bundle);
+            $this->applyPaginationOn($bundle);
         }
 
         // $this->applyDehydrationOn($bundle);
