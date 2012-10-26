@@ -52,7 +52,7 @@ abstract class DispatchableResource implements DispatchableInterface
             $this->applyPaginationOn($bundle);
         }
 
-        // $this->applyDehydrationOn($bundle);
+        $this->applyDehydrationOn($bundle);
 
         return $this->createResponse($bundle);
     }
@@ -66,9 +66,11 @@ abstract class DispatchableResource implements DispatchableInterface
             return $this->createResponse($bundle, array('statusCode' => 405));
         }
 
+        $this->applyHydrationOn($bundle);
+
         $method = 'writeObject';
         $this->methodCheck($method, $bundle);
-        $bundle['data'] = $this->$method($request);
+        $bundle['data'] = $this->$method($request, $bundle);
 
         return $this->createResponse($bundle, array('statusCode' => 201));
     }
@@ -189,6 +191,16 @@ abstract class DispatchableResource implements DispatchableInterface
 
         $bundle['data'] = array_merge(
             array('meta' => $meta), getattr($bundle['data']));
+    }
+
+    protected function applyHydrationOn(array &$bundle)
+    {
+        // Prepares data from unserialized data back to PHP
+    }
+
+    protected function applyDehydrationOn(array &$bundle)
+    {
+        // Prepares data from PHP to be serialized
     }
 
     protected function applySerializationOn(array &$bundle, $contentType)
