@@ -36,28 +36,6 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function invoke_get_with_schema_as_argument_and_without_readSchema_should_throw_DispatchingException_with_response()
-    {
-        $reqMock = $this->mockRequest('GET');
-
-        $controller = $this->getMock('Dispatcher\\DispatchableResource',
-            array('some'));
-        $controller->expects($this->never())
-            ->method('some');
-
-        try {
-            $controller->get($reqMock, array('schema'));
-        } catch (\Dispatcher\Exception\DispatchingException $ex) {
-            $this->assertNotNull($ex->getResponse());
-            return;
-        }
-
-        $this->fail();
-    }
-
-    /**
-     * @test
-     */
     public function invoke_get_with_uri_segments_and_without_readObject_should_throw_DispatchingException_with_response()
     {
         $reqMock = $this->mockRequest('GET');
@@ -143,7 +121,7 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
 
         $controller->expects($this->once())
             ->method('readObject')
-            ->with($this->anything(), $this->contains('schema'));
+            ->with($this->anything(), $this->equalTo('schema'));
 
         $controller->get($reqMock, array('schema', 'someargs', 'arg3'));
     }
@@ -178,5 +156,29 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             '{"meta":{"offset":0,"limit":2,"total":3},"objects":[{"username":"user1"},{"username":"user2"}]}',
             $response->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function resource_not_found_in_readObject_should_have_404_in_response()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readObject'));
+
+        $controller->expects($this->once())
+            ->method('readObject')
+            ->will($this->throwException(
+                new \Dispatcher\Exception\ResourceNotFoundException()));
+
+
+        $response = $controller->get($reqMock, array('id'));
+
+        $this->assertEquals(
+            '{"error":"Not Found"}',
+            $response->getContent());
+        $this->assertEquals(404, $response->getStatusCode());
     }
 }

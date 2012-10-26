@@ -6,6 +6,7 @@ use Dispatcher\Http\HttpResponseInterface;
 use Dispatcher\Http\HttpResponse;
 use Dispatcher\Http\Exception\HttpErrorException;
 use Dispatcher\Exception\DispatchingException;
+use Dispatcher\Exception\ResourceNotFoundException;
 use Dispatcher\Common\DefaultResourceOptions;
 use Dispatcher\Common\ResourceOptionsInterface;
 
@@ -29,8 +30,17 @@ abstract class DispatchableResource implements DispatchableInterface
             $method = 'readObject';
             $this->methodCheck($method, $bundle);
 
-            $object = $this->$method($request, $args);
-            $bundle['data'] = $object;
+            $id = array_shift($args);
+
+            try {
+                $object = $this->$method($request, $id, $args);
+                $bundle['data'] = $object;
+            } catch (ResourceNotFoundException $ex) {
+                $bundle['data'] = array('error' => 'Not Found');
+
+                return $this->createResponse(
+                    $bundle, array('statusCode' => 404));
+            }
         } else {
             $method = 'readCollection';
             $this->methodCheck($method, $bundle);
@@ -108,6 +118,11 @@ abstract class DispatchableResource implements DispatchableInterface
 
     protected function authorizationCheck(HttpRequestInterface $request)
     {
+    }
+
+    protected function readSchema(HttpRequestInterface $request)
+    {
+        return array('message' => 'readSchema');
     }
 
     protected function createResponse(array $bundle,
