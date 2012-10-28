@@ -68,13 +68,32 @@ abstract class DispatchableResource implements DispatchableInterface
             return $this->createResponse($bundle, array('statusCode' => 405));
         }
 
-        $this->applyHydrationOn($bundle);
-
-        $method = 'writeObject';
+        $method = 'createObject';
         $this->methodCheck($method, $bundle);
+
+        $this->applyHydrationOn($bundle);
         $bundle['data'] = $this->$method($request, $bundle);
 
         return $this->createResponse($bundle, array('statusCode' => 201));
+    }
+
+    public function put(HttpRequestInterface $request,
+                        array $uriSegments = array())
+    {
+        $bundle = $this->createBundle($request);
+
+        if (empty($uriSegments) || count($uriSegments) >= 2) {
+            $bundle['data']['error'] = 'Method Not Allowed';
+            return $this->createResponse($bundle, array('statusCode' => 405));
+        }
+
+        $method = 'updateObject';
+        $this->methodCheck($method, $bundle);
+
+        $this->applyHydrationOn($bundle);
+        $bundle['data'] = $this->$method($request, $bundle);
+
+        return $this->createResponse($bundle);
     }
 
     public function doDispatch(HttpRequestInterface $request,

@@ -211,9 +211,9 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
         $reqMock = $this->mockRequest('POST');
 
         $controller = $this->getMock('Dispatcher\\DispatchableResource',
-            array('writeObject'));
+            array('createObject'));
         $controller->expects($this->once())
-            ->method('writeObject');
+            ->method('createObject');
 
         $controller->post($reqMock);
     }
@@ -226,11 +226,59 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
         $reqMock = $this->mockRequest('POST');
 
         $controller = $this->getMock('Dispatcher\\DispatchableResource',
-            array('writeObject'));
+            array('createObject'));
         $controller->expects($this->never())
-            ->method('writeObject');
+            ->method('createObject');
 
         $response = $controller->post($reqMock, array('someid'));
         $this->assertEquals(405, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_put_without_uri_should_return_method_not_allowed()
+    {
+        $reqMock = $this->mockRequest('PUT');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('updateObject'));
+        $controller->expects($this->never())
+            ->method('updateObject');
+
+        $response = $controller->put($reqMock);
+        $this->assertEquals(405, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_put_with_2_uri_segments_should_return_method_not_allowed()
+    {
+        $reqMock = $this->mockRequest('PUT');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('updateObject'));
+        $controller->expects($this->never())
+            ->method('updateObject');
+
+        $response = $controller->put($reqMock, array('id', 'sub'));
+        $this->assertEquals(405, $response->getStatusCode());
+    }
+
+
+    /**
+     * @test
+     */
+    public function invoke_put_with_uri_should_trigger_updateObject()
+    {
+        $reqMock = $this->mockRequest('PUT');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('updateObject'));
+        $controller->expects($this->once())
+            ->method('updateObject');
+
+        $controller->put($reqMock, array('0302'));
     }
 }
