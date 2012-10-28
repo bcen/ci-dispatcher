@@ -17,23 +17,24 @@ abstract class DispatchableResource implements DispatchableInterface
      */
     private $options;
 
-    public function get(HttpRequestInterface $request, array $args = array())
+    public function get(HttpRequestInterface $request,
+                        array $uriSegments = array())
     {
         $bundle = $this->createBundle($request);
 
-        if (count($args) === 1 && $args[0] === 'schema') {
+        if (count($uriSegments) === 1 && $uriSegments[0] === 'schema') {
             $method = 'readSchema';
             $this->methodCheck($method, $bundle);
 
             $bundle['data'] = $this->$method($request);
-        } elseif (!empty($args)) {
+        } elseif (!empty($uriSegments)) {
             $method = 'readObject';
             $this->methodCheck($method, $bundle);
 
-            $id = array_shift($args);
+            $id = array_shift($uriSegments);
 
             try {
-                $object = $this->$method($request, $id, $args);
+                $object = $this->$method($request, $id, $uriSegments);
                 $bundle['data'] = $object;
             } catch (ResourceNotFoundException $ex) {
                 $bundle['data']['error'] = 'Not Found';
@@ -57,11 +58,12 @@ abstract class DispatchableResource implements DispatchableInterface
         return $this->createResponse($bundle);
     }
 
-    public function post(HttpRequestInterface $request, array $args = array())
+    public function post(HttpRequestInterface $request,
+                         array $uriSegments = array())
     {
         $bundle = $this->createBundle($request);
 
-        if (!empty($args)) {
+        if (!empty($uriSegments)) {
             $bundle['data']['error'] = 'Method Not Allowed';
             return $this->createResponse($bundle, array('statusCode' => 405));
         }
@@ -76,15 +78,14 @@ abstract class DispatchableResource implements DispatchableInterface
     }
 
     public function doDispatch(HttpRequestInterface $request,
-                               array $args = array())
+                               array $uriSegments = array())
     {
         $this->methodAccessCheck($request);
-        $this->methodHandlerCheck($request);
         // $this->authenticationCheck($request);
         // $this->authorizationCheck($request);
 
         $method = strtolower($request->getMethod());
-        $response = $this->$method($request, $args);
+        $response = $this->$method($request, $uriSegments);
 
         if (!$response instanceof HttpResponseInterface) {
             $bundle = $this->createBundle($request,
@@ -113,20 +114,6 @@ abstract class DispatchableResource implements DispatchableInterface
                 array('statusCode' => 405));
 
             throw new HttpErrorException('Method Not Allowed', $response);
-        }
-    }
-
-    protected function methodHandlerCheck(HttpRequestInterface $request)
-    {
-        if (!method_exists($this, strtolower($request->getMethod()))) {
-            $bundle = $this->createBundle($request,
-                array('error' => 'Not Implemented'));
-            $response = $this->createResponse($bundle,
-                array('statusCode' => 501));
-
-            throw new HttpErrorException(
-                'No request method handler implemented for '
-                . $request->getMethod(), $response);
         }
     }
 
@@ -226,7 +213,7 @@ abstract class DispatchableResource implements DispatchableInterface
         return $this;
     }
 
-    private function methodCheck($method, $bundle)
+    private function methodCheck($method, array $bundle)
     {
         if (!method_exists($this, $method)) {
             $bundle['data'] = array('error' => 'Server Side Error');
