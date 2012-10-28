@@ -294,7 +294,7 @@ class BootstrapController extends CI_Controller
                 $classInfo = new ClassInfo(
                     $underscored, $path . EXT,
                     $uriSegments);
-            } else if (is_file($path . '/index' . EXT)) {
+            } elseif (is_file($path . '/index' . EXT)) {
                 // see if we have an index.php in the mapped uri directory
                 $classInfo = new ClassInfo(
                     'Index', $path . '/index' . EXT,
