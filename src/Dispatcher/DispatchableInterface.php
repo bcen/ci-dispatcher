@@ -14,10 +14,10 @@ interface DispatchableInterface
      * <i>Note: Implementer must return a object of
      * {@link \Dispatcher\Http\HttpResponseInterface}.</i>
      *
-     * @param \Dispatcher\Http\HttpRequestInterface $request    The incoming request
-     * @param array                                 $args       Extra parameters
+     * @param \Dispatcher\Http\HttpRequestInterface $request     The incoming request
+     * @param array                                 $uriSegments URI segments
      * @return \Dispatcher\Http\HttpResponseInterface
      */
     public function doDispatch(HttpRequestInterface $request,
-                               array $args = array());
+                               array $uriSegments = array());
 }
