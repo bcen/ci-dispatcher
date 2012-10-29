@@ -1,5 +1,5 @@
 <?php
-namespace Dispatcher\Tests;
+namespace Dispatcher\Tests\Http;
 
 class HttpRequestTest extends \PHPUnit_Framework_TestCase
 {
