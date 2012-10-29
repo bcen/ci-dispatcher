@@ -266,7 +266,6 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(405, $response->getStatusCode());
     }
 
-
     /**
      * @test
      */
