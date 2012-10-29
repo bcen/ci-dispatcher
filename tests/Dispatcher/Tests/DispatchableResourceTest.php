@@ -237,6 +237,24 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function response_for_createObject_should_have_location_header()
+    {
+        $reqMock = $this->mockRequest('POST');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('createObject'));
+        $controller->expects($this->once())
+            ->method('createObject')
+            ->will($this->returnValue(array('id' => 'someid')));
+
+        $response = $controller->post($reqMock);
+        $this->assertEquals(201, $response->getStatusCode());
+        $this->assertNotNull($response->getHeader('Location'));
+    }
+
+    /**
+     * @test
+     */
     public function invoke_put_without_uri_should_return_method_not_allowed()
     {
         $reqMock = $this->mockRequest('PUT');

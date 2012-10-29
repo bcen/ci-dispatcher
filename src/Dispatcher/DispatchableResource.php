@@ -74,7 +74,10 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->applyHydrationOn($bundle);
         $bundle['data'] = $this->$method($request, $bundle);
 
-        return $this->createResponse($bundle, array('statusCode' => 201));
+        // TODO: add a real location header
+        return $this->createResponse($bundle)
+            ->setStatusCode(201)
+            ->setHeader('Location', 'http://www.google.com/');
     }
 
     public function put(HttpRequestInterface $request,
