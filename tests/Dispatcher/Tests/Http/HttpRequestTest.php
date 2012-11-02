@@ -154,4 +154,24 @@ class HttpRequestTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('http://localhost/', $this->request->getBaseUrl());
     }
+
+    /**
+     * @test
+     */
+    public function getAcceptableContentTypes_should_return_array_from_accept_header()
+    {
+        $reqMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
+            array('getHeader'));
+
+        $reqMock->expects($this->once())
+            ->method('getHeader')
+            ->with($this->equalTo('Accept'))
+            ->will($this->returnValue('text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'));
+
+        $types = $reqMock->getAcceptableContentTypes();
+        $this->assertTrue(is_array($types));
+        $this->assertContains('text/html', $types);
+        $this->assertContains('application/xml', $types);
+        $this->assertContains('application/xhtml+xml', $types);
+    }
 }

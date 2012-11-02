@@ -157,4 +157,6 @@ interface HttpRequestInterface
     public function getFullUri();
 
     public function getSession();
+
+    public function getAcceptableContentTypes();
 }
