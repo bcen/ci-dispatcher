@@ -122,6 +122,11 @@ abstract class DispatchableResource implements DispatchableInterface
         return $response;
     }
 
+    /**
+     * Checks for correct Accept header and supported formats from options.
+     * @param \Dispatcher\Http\HttpRequestInterface $request
+     * @throws \Dispatcher\Http\Exception\HttpErrorException If no supported format found
+     */
     protected function contentNegotiationCheck(HttpRequestInterface $request)
     {
         $contentType = $this->detectSupportedContentType($request);
@@ -132,6 +137,11 @@ abstract class DispatchableResource implements DispatchableInterface
         }
     }
 
+    /**
+     * Checks for allowed methods from options
+     * @param Http\HttpRequestInterface $request
+     * @throws Http\Exception\HttpErrorException If no supported request method found
+     */
     protected function methodAccessCheck(HttpRequestInterface $request)
     {
         $reqMethod = $request->getMethod();
@@ -223,6 +233,13 @@ abstract class DispatchableResource implements DispatchableInterface
         // Prepares data from PHP to be serialized
     }
 
+    protected function applySerializationOn(array &$bundle, $contentType)
+    {
+        $data = getattr($bundle['data'], '');
+        $bundle['data'] = (is_array($data) || is_object($data))
+            ? json_encode($data) : '';
+    }
+
     /**
      * Detects and returns the requested content type from supported formats.
      * @param Http\HttpRequestInterface $request
@@ -258,14 +275,6 @@ abstract class DispatchableResource implements DispatchableInterface
         }
 
         return $contentType;
-    }
-
-    protected function applySerializationOn(array &$bundle, $contentType)
-    {
-        // TODO: detect accept header and serialize to that format
-        $data = getattr($bundle['data'], '');
-        $bundle['data'] = (is_array($data) || is_object($data))
-            ? json_encode($data) : '';
     }
 
     protected function getOptions()
