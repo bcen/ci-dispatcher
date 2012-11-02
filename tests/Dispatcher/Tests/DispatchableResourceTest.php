@@ -6,10 +6,13 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     public function mockRequest($method)
     {
         $mock = $this->getMock('Dispatcher\\Http\\HttpRequest',
-            array('getMethod'));
+            array('getMethod', 'getAcceptableContentTypes'));
         $mock->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue($method));
+        $mock->expects($this->any())
+            ->method('getAcceptableContentTypes')
+            ->will($this->returnValue(array('application/watever', '*/*', 'application/json')));
         return $mock;
     }
 
@@ -177,6 +180,54 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             '{"username":"someone","id":5}',
             $response->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function createResponse_should_have_correct_content_type_from_request()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readObject'));
+
+        $controller->expects($this->once())
+            ->method('readObject')
+            ->will($this->returnValue(
+                array('username' => 'someone', 'id' => 5)));
+
+        $response = $controller->get($reqMock, array('id'));
+        $this->assertEquals('application/json', $response->getContentType());
+    }
+
+    /**
+     * @test
+     */
+    public function doDispatch_should_throw_HttpErrorException_with_406_response_for_no_supported_formats()
+    {
+        $reqMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
+            array('getMethod', 'getAcceptableContentTypes'));
+        $reqMock->expects($this->any())
+            ->method('getMethod')
+            ->will($this->returnValue('GET'));
+        $reqMock->expects($this->any())
+            ->method('getAcceptableContentTypes')
+            ->will($this->returnValue(array('text/some-crazy-formats')));
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('some'));
+        $controller->expects($this->never())
+            ->method('some');
+
+        try {
+            $response = $controller->doDispatch($reqMock, array('id'));
+        } catch (\Dispatcher\Http\Exception\HttpErrorException $ex) {
+            $this->assertEquals(406, $ex->getResponse()->getStatusCode());
+            return;
+        }
+
+        $this->fail('Expected HttpErrorException');
     }
 
     /**

@@ -102,6 +102,7 @@ abstract class DispatchableResource implements DispatchableInterface
     public function doDispatch(HttpRequestInterface $request,
                                array $uriSegments = array())
     {
+        $this->contentNegotiationCheck($request);
         $this->methodAccessCheck($request);
         // $this->authenticationCheck($request);
         // $this->authorizationCheck($request);
@@ -119,6 +120,17 @@ abstract class DispatchableResource implements DispatchableInterface
         }
 
         return $response;
+    }
+
+    protected function contentNegotiationCheck(HttpRequestInterface $request)
+    {
+        $contentType = $this->detectSupportedContentType(
+            $request->getAcceptableContentTypes());
+
+        if ($contentType === null) {
+            throw new HttpErrorException('Format not supported',
+                new HttpResponse(406));
+        }
     }
 
     protected function methodAccessCheck(HttpRequestInterface $request)
@@ -155,7 +167,8 @@ abstract class DispatchableResource implements DispatchableInterface
     protected function createResponse(array $bundle,
                                       array $kwargs = array())
     {
-        $contentType = 'application/json';
+        $contentType = $this->detectSupportedContentType(
+            $bundle['request']->getAcceptableContentTypes());
         $this->applySerializationOn($bundle, $contentType);
 
         $statusCode = getattr($kwargs['statusCode'], 200);
@@ -210,6 +223,28 @@ abstract class DispatchableResource implements DispatchableInterface
     protected function applyDehydrationOn(array &$bundle)
     {
         // Prepares data from PHP to be serialized
+    }
+
+    protected function detectSupportedContentType(array $contentTypes)
+    {
+        // TODO: maybe a better way to detect which format to use?
+        $formats = $this->getOptions()->getSupportedFormats();
+        $supported = null;
+
+        foreach ($contentTypes as $type) {
+            if (in_array($type, $formats)) {
+                $supported = $type;
+                break;
+            }
+        }
+
+        if ($supported === null) {
+            if (in_array('*/*', $contentTypes)) {
+                $supported = $this->getOptions()->getDefaultFormat();
+            }
+        }
+
+        return $supported;
     }
 
     protected function applySerializationOn(array &$bundle, $contentType)
