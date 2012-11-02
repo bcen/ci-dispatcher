@@ -124,8 +124,7 @@ abstract class DispatchableResource implements DispatchableInterface
 
     protected function contentNegotiationCheck(HttpRequestInterface $request)
     {
-        $contentType = $this->detectSupportedContentType(
-            $request->getAcceptableContentTypes());
+        $contentType = $this->detectSupportedContentType($request);
 
         if ($contentType === null) {
             throw new HttpErrorException('Format not supported',
@@ -167,8 +166,7 @@ abstract class DispatchableResource implements DispatchableInterface
     protected function createResponse(array $bundle,
                                       array $kwargs = array())
     {
-        $contentType = $this->detectSupportedContentType(
-            $bundle['request']->getAcceptableContentTypes());
+        $contentType = $this->detectSupportedContentType($bundle['request']);
         $this->applySerializationOn($bundle, $contentType);
 
         $statusCode = getattr($kwargs['statusCode'], 200);
@@ -225,26 +223,41 @@ abstract class DispatchableResource implements DispatchableInterface
         // Prepares data from PHP to be serialized
     }
 
-    protected function detectSupportedContentType(array $contentTypes)
+    /**
+     * Detects and returns the requested content type from supported formats.
+     * @param Http\HttpRequestInterface $request
+     * @return string|null Supported format in string, or null if no supported format found
+     */
+    protected function detectSupportedContentType(HttpRequestInterface $request)
     {
         // TODO: maybe a better way to detect which format to use?
         $formats = $this->getOptions()->getSupportedFormats();
-        $supported = null;
+        $contentType = null;
 
-        foreach ($contentTypes as $type) {
-            if (in_array($type, $formats)) {
-                $supported = $type;
+        // Look for content type in query string
+        // e.g. /?format=application/json
+        if (in_array($request->get('format'), $formats)) {
+            $contentType = $request->get('format');
+        }
+
+        // Suppress the query string from Accept header
+        // e.g. Accept: text/html,application/json
+        foreach ($request->getAcceptableContentTypes() as $format) {
+            if (in_array($format, $formats)) {
+                $contentType = $format;
                 break;
             }
         }
 
-        if ($supported === null) {
-            if (in_array('*/*', $contentTypes)) {
-                $supported = $this->getOptions()->getDefaultFormat();
+        // if nothing found in query string and Accept header,
+        // then use default format if */* present
+        if ($contentType === null) {
+            if (in_array('*/*', $request->getAcceptableContentTypes())) {
+                $contentType = $this->getOptions()->getDefaultFormat();
             }
         }
 
-        return $supported;
+        return $contentType;
     }
 
     protected function applySerializationOn(array &$bundle, $contentType)
