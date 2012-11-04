@@ -87,7 +87,7 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (empty($uriSegments) || count($uriSegments) >= 2) {
             $bundle['data']['error'] = 'Method Not Allowed';
-            return $this->createResponse($bundle, array('statusCode' => 405));
+            return $this->createResponse($bundle)->setStatusCode(405);
         }
 
         $method = 'updateObject';
@@ -104,17 +104,16 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $this->contentNegotiationCheck($request);
         $this->methodAccessCheck($request);
-        // $this->authenticationCheck($request);
-        // $this->authorizationCheck($request);
+        $this->authenticationCheck($request);
+        $this->authorizationCheck($request);
 
         $method = strtolower($request->getMethod());
         $response = $this->$method($request, $uriSegments);
 
         if (!$response instanceof HttpResponseInterface) {
-            $bundle = $this->createBundle($request,
-                array('error' => 'Server Side Error'));
-            $response = $this->createResponse($bundle,
-                array('statusCode' => 500));
+            $bundle = $this->createBundle($request);
+            $bundle['data']['error'] = 'Server Side Error';
+            $response = $this->createResponse($bundle)->setStatusCode(500);
             throw new DispatchingException(
                 "$method must return HttpResponseInterface", $response);
         }
@@ -151,11 +150,9 @@ abstract class DispatchableResource implements DispatchableInterface
         });
 
         if (empty($allowed)) {
-            $bundle = $this->createBundle($request,
-                array('error' => 'Method Not Allowed'));
-            $response = $this->createResponse($bundle,
-                array('statusCode' => 405));
-
+            $bundle = $this->createBundle($request);
+            $bundle['data']['error'] = 'Method Not Allowed';
+            $response = $this->createResponse($bundle)->setStatusCode(405);
             throw new HttpErrorException('Method Not Allowed', $response);
         }
     }
@@ -295,12 +292,10 @@ abstract class DispatchableResource implements DispatchableInterface
     private function methodCheck($method, array $bundle)
     {
         if (!method_exists($this, $method)) {
-            $bundle['data'] = array('error' => 'Server Side Error');
-            $response = $this->createResponse(
-                $bundle, array('statusCode' => 500));
+            $bundle['data']['error'] = 'Server Side Error';
+            $response = $this->createResponse($bundle)->setStatusCode(500);
             throw new DispatchingException(
-                "Please implement $method for your resource",
-                $response);
+                "Please implement $method for your resource", $response);
         }
     }
 }
