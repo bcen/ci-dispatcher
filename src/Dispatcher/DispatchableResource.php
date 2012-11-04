@@ -96,7 +96,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->applyHydrationOn($bundle);
         $bundle['data'] = $this->$method($request, $bundle);
 
-        return $this->createResponse($bundle);
+        return $this->createResponse($bundle)->setStatusCode(202);
     }
 
     public function delete(HttpRequestInterface $request,
