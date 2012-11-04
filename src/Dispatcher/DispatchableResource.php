@@ -99,6 +99,25 @@ abstract class DispatchableResource implements DispatchableInterface
         return $this->createResponse($bundle);
     }
 
+    public function delete(HttpRequestInterface $request,
+                           array $uriSegments = array())
+    {
+        $bundle = $this->createBundle($request);
+
+        if (empty($uriSegments) || count($uriSegments) >= 2) {
+            $bundle['data']['error'] = 'Method Not Allowed';
+            return $this->createResponse($bundle)->setStatusCode(405);
+        }
+
+        $method = 'deleteObject';
+        $this->methodCheck($method, $bundle);
+
+        $this->applyHydrationOn($bundle);
+        $bundle['data'] = $this->$method($request, $bundle);
+
+        return $this->createResponse($bundle);
+    }
+
     public function doDispatch(HttpRequestInterface $request,
                                array $uriSegments = array())
     {
