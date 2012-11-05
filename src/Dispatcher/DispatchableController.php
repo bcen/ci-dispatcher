@@ -1,6 +1,9 @@
 <?php
 namespace Dispatcher;
 
+use ReflectionMethod;
+use ReflectionException;
+
 use Dispatcher\Exception\DispatchingException;
 use Dispatcher\Http\HttpRequestInterface;
 use Dispatcher\Http\HttpResponseInterface;
@@ -21,21 +24,22 @@ abstract class DispatchableController implements DispatchableInterface
      * <i>Note: Overrides this to have a custom dispatching schema.</i>
      *
      * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request
-     * @param array                                 $args    Extra uri arguments
+     * @param array                                 $uriSegments URI segments
      * @throws \Dispatcher\Exception\DispatchingException
      * @return \Dispatcher\Http\HttpResponseInterface
      */
     public function doDispatch(HttpRequestInterface $request,
-                               array $args = array())
+                               array $uriSegments = array())
     {
         // number of expected arguments
-        $argc = array_unshift($args, $request);
+        $argc = array_unshift($uriSegments, $request);
 
-        // see what is the requested method, e.g. 'GET', 'POST' and etc...
+        $requestMethodHandler = strtolower($request->getMethod());
+
         try {
-            $reflectedMethod = new \ReflectionMethod(
-                $this, strtolower($request->getMethod()));
-        } catch (\ReflectionException $ex) {
+            $reflectedMethod = new ReflectionMethod(
+                $this, $requestMethodHandler);
+        } catch (ReflectionException $ex) {
             return new HttpResponse(501);
         }
 
@@ -43,8 +47,8 @@ abstract class DispatchableController implements DispatchableInterface
             return new Error404Response();
         }
 
-        $response = call_user_func_array(array(
-            $this, strtolower($request->getMethod())), $args);
+        $response = call_user_func_array(
+            array($this, $requestMethodHandler), $uriSegments);
 
         if (!$response instanceof HttpResponseInterface) {
             throw new DispatchingException(

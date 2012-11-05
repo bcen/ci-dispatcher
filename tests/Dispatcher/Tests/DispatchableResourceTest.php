@@ -6,10 +6,13 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     public function mockRequest($method)
     {
         $mock = $this->getMock('Dispatcher\\Http\\HttpRequest',
-            array('getMethod'));
+            array('getMethod', 'getAcceptableContentTypes'));
         $mock->expects($this->any())
             ->method('getMethod')
             ->will($this->returnValue($method));
+        $mock->expects($this->any())
+            ->method('getAcceptableContentTypes')
+            ->will($this->returnValue(array('application/watever', '*/*', 'application/json')));
         return $mock;
     }
 
@@ -24,13 +27,35 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
             'Dispatcher\\DispatchableResource',
             array('readCollection'));
 
-        $controller->expects($this->any())
+        $controller->expects($this->once())
             ->method('readCollection')
             ->with($this->isInstanceOf(
                 'Dispatcher\\Http\HttpRequestInterface'));
 
 
         $controller->get($reqMock);
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_get_with_uri_segments_and_without_readObject_should_throw_DispatchingException_with_response()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('some'));
+        $controller->expects($this->never())
+            ->method('some');
+
+        try {
+            $controller->get($reqMock, array(1, 2, 3));
+        } catch (\Dispatcher\Exception\DispatchingException $ex) {
+            $this->assertNotNull($ex->getResponse());
+            return;
+        }
+
+        $this->fail();
     }
 
     /**
@@ -58,55 +83,270 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function invoke_get_should_serialize_objects_from_readCollection_to_response_content()
+    public function invoke_get_with_schema_as_uri_argument_should_invoke_readSchema()
     {
         $reqMock = $this->mockRequest('GET');
 
         $controller = $this->getMock('Dispatcher\\DispatchableResource',
-            array('readCollection'));
+            array('readSchema'));
+
+        $controller->expects($this->once())
+            ->method('readSchema');
+
+        $controller->get($reqMock, array('schema'));
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_get_with_uri_arguments_should_invoke_readObject()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readObject'));
+
+        $controller->expects($this->once())
+            ->method('readObject');
+
+        $controller->get($reqMock, array('some-id'));
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_get_with_schema_and_uri_as_arguments_should_invoke_readObject()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readObject'));
+
+        $controller->expects($this->once())
+            ->method('readObject')
+            ->with($this->anything(), $this->equalTo('schema'));
+
+        $controller->get($reqMock, array('schema', 'someargs', 'arg3'));
+    }
+
+    /**
+     * @test
+     */
+    public function response_for_readCollection_on_get_should_have_correct_paginated_meta_and_objects()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $options = new \Dispatcher\Common\DefaultResourceOptions();
+        $options->setPageLimit(2);
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readCollection', 'getOptions'));
 
         $controller->expects($this->any())
+            ->method('getOptions')
+            ->will($this->returnValue($options));
+
+        $controller->expects($this->once())
             ->method('readCollection')
             ->will($this->returnValue(array(
-                array('username' => 'someone'),
-                array('username' => 'someoneelse'),
-                array('username' => 'anotherguy'))));
+                array('username' => 'user1'),
+                array('username' => 'user2'),
+                array('username' => 'user3')
+            )));
+
 
         $response = $controller->get($reqMock);
-
         $this->assertEquals(
-            '{"meta":{"offset":0,"limit":20,"total":3},"objects":[{"username":"someone"},{"username":"someoneelse"},{"username":"anotherguy"}]}',
+            '{"meta":{"offset":0,"limit":2,"total":3},"objects":[{"username":"user1"},{"username":"user2"}]}',
             $response->getContent());
     }
 
     /**
      * @test
      */
-    public function invoke_get_should_serialize_only_objects_from_readCollection_with_the_page_limits_to_response_content()
+    public function get_for_readObject_should_have_correct_serialized_contents_in_response()
     {
         $reqMock = $this->mockRequest('GET');
 
-        $options = new \Dispatcher\Common\DefaultResourceOptions();
-        $options->setPageLimit(1);
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readObject'));
+
+        $controller->expects($this->once())
+            ->method('readObject')
+            ->will($this->returnValue(
+                array('username' => 'someone', 'id' => 5)));
+
+        $response = $controller->get($reqMock, array('id'));
+        $this->assertEquals(
+            '{"username":"someone","id":5}',
+            $response->getContent());
+    }
+
+    /**
+     * @test
+     */
+    public function createResponse_should_have_correct_content_type_from_request()
+    {
+        $reqMock = $this->mockRequest('GET');
 
         $controller = $this->getMock('Dispatcher\\DispatchableResource',
-            array('readCollection', 'getOptions'));
+            array('readObject'));
 
-        $controller->expects($this->any())
-            ->method('readCollection')
-            ->will($this->returnValue(array(
-                    array('username' => 'someone'),
-                    array('username' => 'someoneelse'),
-                    array('username' => 'anotherguy'))));
+        $controller->expects($this->once())
+            ->method('readObject')
+            ->will($this->returnValue(
+                array('username' => 'someone', 'id' => 5)));
 
-        $controller->expects($this->any())
-            ->method('getOptions')
-            ->will($this->returnValue($options));
+        $response = $controller->get($reqMock, array('id'));
+        $this->assertEquals('application/json', $response->getContentType());
+    }
 
-        $response = $controller->get($reqMock);
+    /**
+     * @test
+     */
+    public function doDispatch_should_throw_HttpErrorException_with_406_response_for_no_supported_formats()
+    {
+        $reqMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
+            array('getMethod', 'getAcceptableContentTypes'));
+        $reqMock->expects($this->any())
+            ->method('getMethod')
+            ->will($this->returnValue('GET'));
+        $reqMock->expects($this->any())
+            ->method('getAcceptableContentTypes')
+            ->will($this->returnValue(array('text/some-crazy-formats')));
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('some'));
+        $controller->expects($this->never())
+            ->method('some');
+
+        try {
+            $response = $controller->doDispatch($reqMock, array('id'));
+        } catch (\Dispatcher\Http\Exception\HttpErrorException $ex) {
+            $this->assertEquals(406, $ex->getResponse()->getStatusCode());
+            return;
+        }
+
+        $this->fail('Expected HttpErrorException');
+    }
+
+    /**
+     * @test
+     */
+    public function resource_not_found_in_readObject_should_have_404_in_response()
+    {
+        $reqMock = $this->mockRequest('GET');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('readObject'));
+
+        $controller->expects($this->once())
+            ->method('readObject')
+            ->will($this->throwException(
+                new \Dispatcher\Exception\ResourceNotFoundException()));
+
+
+        $response = $controller->get($reqMock, array('id'));
 
         $this->assertEquals(
-            '{"meta":{"offset":0,"limit":1,"total":3},"objects":[{"username":"someone"}]}',
+            '{"error":"Not Found"}',
             $response->getContent());
+        $this->assertEquals(404, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_post_without_uri_segments_should_invoke_writeObject()
+    {
+        $reqMock = $this->mockRequest('POST');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('createObject'));
+        $controller->expects($this->once())
+            ->method('createObject');
+
+        $controller->post($reqMock);
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_post_with_uri_segments_should_return_method_not_allowed_response()
+    {
+        $reqMock = $this->mockRequest('POST');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('createObject'));
+        $controller->expects($this->never())
+            ->method('createObject');
+
+        $response = $controller->post($reqMock, array('someid'));
+        $this->assertEquals(405, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function response_for_createObject_should_have_location_header()
+    {
+        $reqMock = $this->mockRequest('POST');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('createObject'));
+        $controller->expects($this->once())
+            ->method('createObject')
+            ->will($this->returnValue(array('id' => 'someid')));
+
+        $response = $controller->post($reqMock);
+        $this->assertEquals(201, $response->getStatusCode());
+        $this->assertNotNull($response->getHeader('Location'));
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_put_without_uri_should_return_method_not_allowed()
+    {
+        $reqMock = $this->mockRequest('PUT');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('updateObject'));
+        $controller->expects($this->never())
+            ->method('updateObject');
+
+        $response = $controller->put($reqMock);
+        $this->assertEquals(405, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_put_with_2_uri_segments_should_return_method_not_allowed()
+    {
+        $reqMock = $this->mockRequest('PUT');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('updateObject'));
+        $controller->expects($this->never())
+            ->method('updateObject');
+
+        $response = $controller->put($reqMock, array('id', 'sub'));
+        $this->assertEquals(405, $response->getStatusCode());
+    }
+
+    /**
+     * @test
+     */
+    public function invoke_put_with_uri_should_trigger_updateObject()
+    {
+        $reqMock = $this->mockRequest('PUT');
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('updateObject'));
+        $controller->expects($this->once())
+            ->method('updateObject');
+
+        $controller->put($reqMock, array('0302'));
     }
 }

@@ -4,8 +4,6 @@ namespace Dispatcher;
 use stdClass;
 use Exception;
 use ReflectionClass;
-use ReflectionMethod;
-use ReflectionException;
 use CI_Controller;
 use InvalidArgumentException;
 
@@ -48,7 +46,7 @@ class BootstrapController extends CI_Controller
      * <i>Note: The life cycle of this class wil be managed/called by CodeIgniter.php</i>
      *
      * @param string $method      The CodeIgniter controller function to be called.
-     * @param array  $uriSegments Uri segments
+     * @param array  $uriSegments URI segments
      * @throws \Dispatcher\Exception\DispatchingException|\Exception
      */
     public function _remap($method, $uriSegments)
@@ -111,10 +109,8 @@ class BootstrapController extends CI_Controller
     protected function initializeConfig()
     {
         $config = $this->loadDispatcherConfig();
-        $this->_middlewares = isset($config['middlewares'])
-            ? $config['middlewares'] : array();
-        $this->_debug = isset($config['debug']) ? $config['debug'] : false;
-
+        $this->_middlewares = getattr($config['middlewares'], array());
+        $this->_debug = getattr($config['debug'], false);
         $this->container = $this->createContainer(
             $this->loadDependenciesConfig());
     }
@@ -163,17 +159,13 @@ class BootstrapController extends CI_Controller
     {
         $container = new DIContainer();
 
-        $containerCfg = isset($config['container'])
-            ? $config['container']
-            : array();
-
-        $sharedContainerCfg = isset($config['sharedContainer'])
-            ? $config['sharedContainer']
-            : array();
+        $containerCfg = getattr($config['container'], array());
 
         foreach ($containerCfg as $k => $v) {
             $container[$k] = $v;
         }
+
+        $sharedContainerCfg = getattr($config['sharedContainer'], array());
 
         foreach ($sharedContainerCfg as $k => $v) {
             $container->share($k, $v);
@@ -184,8 +176,8 @@ class BootstrapController extends CI_Controller
 
     /**
      * Sends the response.
-     * @param Http\HttpRequestInterface $request
-     * @param Http\HttpResponseInterface $response
+     * @param \Dispatcher\Http\HttpRequestInterface $request
+     * @param \Dispatcher\Http\HttpResponseInterface $response
      */
     protected function renderResponse(HttpRequestInterface $request,
                                       HttpResponseInterface $response)
@@ -197,8 +189,8 @@ class BootstrapController extends CI_Controller
      * Dispatches the incoming request to the proper resource.
      * <i>Note: Resource must implement {@link \Dispatcher\Http\DispatchableInterface}</i>
      *
-     * @param \Dispatcher\Http\HttpRequestInterface $request The incoming request object
-     * @param array                                 $uriSegments     The uri segments
+     * @param \Dispatcher\Http\HttpRequestInterface $request     The incoming request object
+     * @param array                                 $uriSegments The uri segments
      * @throws \Dispatcher\Exception\DispatchingException|\Exception
      * @return \Dispatcher\Http\HttpResponseInterface
      */
@@ -209,8 +201,6 @@ class BootstrapController extends CI_Controller
 
         // 404 page if we cannot find any assocaited class info
         if ($classInfo === null) {
-            log_message('debug', '404 due to unknown classInfo for '.
-                implode(',', $request->getUriArray()));
             return new Error404Response();
         }
 
@@ -224,27 +214,32 @@ class BootstrapController extends CI_Controller
         set_error_handler(function($errno, $errstr) {
             throw new Exception("$errno@$errstr");
         });
-        $response = $controller->doDispatch(
-            $request, $classInfo->getParams());
+        $response = $controller->doDispatch($request, $classInfo->getParams());
         restore_error_handler();
 
         return $response;
     }
 
     /**
-     * Loads and returns an array of middleware instance.
+     * Loads and returns an array of middleware instances.
      * @return array
      */
     protected function loadMiddlewares()
     {
+        // middleware instances
         $middlewares = array();
+
         foreach ($this->_middlewares as $name) {
             $mw = null;
             $classInfo = null;
+
+            // see if the class is loaded or trigger autoload
             if (class_exists($name)) {
                 $classInfo = new ClassInfo($name, '');
             } else {
                 $paths = explode('/', $name);
+
+                // prepares the class name
                 $name = array_pop($paths);
                 $name = ucwords(preg_replace(
                     '/[_]+/', ' ', strtolower(trim($name))));
@@ -253,7 +248,7 @@ class BootstrapController extends CI_Controller
                 $parts = array_merge(
                     array(rtrim(APPPATH, '/'), 'middlewares'),
                     $paths,
-                    array(strtolower($name).EXT)
+                    array(strtolower($name) . EXT)
                 );
                 $classInfo = new ClassInfo($name, implode('/', $parts));
             }
@@ -267,7 +262,12 @@ class BootstrapController extends CI_Controller
         return $middlewares;
     }
 
-    protected function loadClassInfoOn(array $routes)
+    /**
+     * Lookup the resource controller to use base on the $uriSegments.
+     * @param array $uriSegments An array of URI
+     * @return \Dispatcher\Common\ClassInfo|null Returns an instance of the class if success, otherwise, null
+     */
+    protected function loadClassInfoOn(array $uriSegments)
     {
         $path = APPPATH . 'controllers'; // default path to look for the class
 
@@ -275,7 +275,7 @@ class BootstrapController extends CI_Controller
 
         // We always take the first element in `$routes`
         // and try to see if the file exists with the same name
-        while ($r = array_shift($routes)) {
+        while ($r = array_shift($uriSegments)) {
             $path .= DIRECTORY_SEPARATOR . $r;
 
             if (is_file($path . EXT)) {
@@ -291,11 +291,14 @@ class BootstrapController extends CI_Controller
                     '/[_]+/', ' ', strtolower(trim($r))));
                 $underscored = preg_replace('/[\s]+/', '_', trim($huamnized));
 
-                $classInfo = new ClassInfo($underscored, $path . EXT, $routes);
-            } else if (is_file($path . '/index' . EXT)) {
+                $classInfo = new ClassInfo(
+                    $underscored, $path . EXT,
+                    $uriSegments);
+            } elseif (is_file($path . '/index' . EXT)) {
                 // see if we have an index.php in the mapped uri directory
-                $classInfo = new ClassInfo('Index', $path . '/index' . EXT,
-                    $routes);
+                $classInfo = new ClassInfo(
+                    'Index', $path . '/index' . EXT,
+                    $uriSegments);
             }
         }
 
@@ -303,7 +306,7 @@ class BootstrapController extends CI_Controller
     }
 
     /**
-     * Loads and returns an instance of $className with the given $classPath.
+     * Loads and returns an instance of the given class.
      * <i>Note: The default implementation uses Reflection to inject
      * dependencies into constructor from the dependencies config.</i>
      *

@@ -155,6 +155,17 @@ class HttpRequest implements HttpRequestInterface
         return $this->_ci()->session;
     }
 
+    public function getAcceptableContentTypes()
+    {
+        $accept = preg_replace('/[\s]+/', '', $this->getHeader('Accept', ''));
+        $types = explode(',', $accept);
+        foreach ($types as $k => $v) {
+            $v = explode(';', $v);
+            $types[$k] = array_shift($v);
+        }
+        return $types;
+    }
+
     private function _fetch($value, $default)
     {
         return $value !== false ? $value : $default;

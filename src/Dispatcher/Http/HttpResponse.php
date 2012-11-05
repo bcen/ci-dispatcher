@@ -52,9 +52,9 @@ class HttpResponse implements HttpResponseInterface
         return $this;
     }
 
-    public function getHeader($key)
+    public function getHeader($key, $default = null)
     {
-        return $this->headers[$key];
+        return getattr($this->headers[$key], $default);
     }
 
     public function setHeader($key, $value)
