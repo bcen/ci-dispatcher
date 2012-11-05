@@ -218,25 +218,16 @@ abstract class DispatchableResource implements DispatchableInterface
     protected function applyPaginationOn(array &$bundle)
     {
         $req = $bundle['request'];
+        $paginator = $this->getOptions()->getPaginator();
 
         $limit = (int)$req->get('limit', $this->getOptions()->getPageLimit());
         $offset = (int)$req->get('offset', 0);
 
-        $paginator = $this->getOptions()->getPaginator();
-        $paginator->setObjects(getattr($bundle['data']['objects'], array()));
-        $paginator->setLimit($limit);
-        $paginator->setOffset($offset);
-        $bundle['data']['objects'] = $paginator->getPage();
+        $paginator->setQueryset(getattr($bundle['data']['objects'], array()))
+            ->setOffset($offset)
+            ->setLimit($limit);
 
-
-        $meta = array(
-            'offset' => $offset,
-            'limit'  => $limit,
-            'total'  => $paginator->getCount()
-        );
-
-        $bundle['data'] = array_merge(
-            array('meta' => $meta), getattr($bundle['data']));
+        $bundle['data'] = $paginator->getPage();
     }
 
     protected function applyHydrationOn(array &$bundle)
