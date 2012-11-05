@@ -3,7 +3,7 @@ namespace Dispatcher\Common;
 
 class ObjectPaginator implements PaginatorInterface
 {
-    private $objects = array();
+    private $queryset;
     private $offset;
     private $limit;
 
@@ -13,27 +13,36 @@ class ObjectPaginator implements PaginatorInterface
              ->setLimit($limit);
     }
 
-    public function getObjects()
+    public function getQueryset()
     {
-        return $this->objects;
+        return $this->queryset;
     }
 
-    public function setObjects($objects)
+    public function setQueryset($queryset)
     {
-        $this->objects = $objects;
+        $this->queryset = $queryset;
         return $this;
     }
 
     public function getCount()
     {
-        return count($this->objects);
+        return count($this->queryset);
     }
 
     public function getPage()
     {
-        $objects = array_slice($this->objects,
-            $this->getOffset(), $this->getLimit());
-        return $objects;
+        $objects = array_slice(
+            $this->getQueryset(),
+            $this->getOffset(),
+            $this->getLimit()
+        );
+
+        $data['meta']['offset'] = (int)$this->getOffset();
+        $data['meta']['limit'] = (int)$this->getLimit();
+        $data['meta']['total'] = (int)$this->getCount();
+        $data['objects'] = $objects;
+
+        return $data;
     }
 
     public function getOffset()
