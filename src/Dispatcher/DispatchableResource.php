@@ -9,6 +9,7 @@ use Dispatcher\Exception\DispatchingException;
 use Dispatcher\Exception\ResourceNotFoundException;
 use Dispatcher\Common\DefaultResourceOptions;
 use Dispatcher\Common\ResourceOptionsInterface;
+use Dispatcher\Common\ArrayHelper as a;
 
 abstract class DispatchableResource implements DispatchableInterface
 {
@@ -198,7 +199,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->applySerializationOn($bundle, $contentType);
 
         $response = $bundle['response'];
-        $response->setContent(getattr($bundle['data'], ''))
+        $response->setContent(a::ref($bundle['data'], ''))
                  ->setContentType($contentType);
 
         return $response;
@@ -236,7 +237,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $limit = (int)$req->get('limit', $this->getOptions()->getPageLimit());
         $offset = (int)$req->get('offset', 0);
 
-        $paginator->setQueryset(getattr($bundle['data']['objects'], array()))
+        $paginator->setQueryset(a::ref($bundle['data']['objects'], array()))
             ->setOffset($offset)
             ->setLimit($limit);
 
@@ -255,7 +256,7 @@ abstract class DispatchableResource implements DispatchableInterface
 
     protected function applySerializationOn(array &$bundle, $contentType)
     {
-        $data = getattr($bundle['data'], '');
+        $data = a::ref($bundle['data'], '');
         $bundle['data'] = (is_array($data) || is_object($data))
             ? json_encode($data) : '';
     }

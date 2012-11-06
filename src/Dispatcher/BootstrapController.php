@@ -15,6 +15,7 @@ use Dispatcher\Http\Exception\HttpErrorException;
 use Dispatcher\Common\DIContainer;
 use Dispatcher\Common\ClassInfo;
 use Dispatcher\Common\CodeIgniterAware;
+use Dispatcher\Common\ArrayHelper as a;
 use Dispatcher\Exception\DispatchingException;
 
 /**
@@ -109,8 +110,8 @@ class BootstrapController extends CI_Controller
     protected function initializeConfig()
     {
         $config = $this->loadDispatcherConfig();
-        $this->_middlewares = getattr($config['middlewares'], array());
-        $this->_debug = getattr($config['debug'], false);
+        $this->_middlewares = a::ref($config['middlewares'], array());
+        $this->_debug = a::ref($config['debug'], false);
         $this->container = $this->createContainer(
             $this->loadDependenciesConfig());
     }
@@ -159,13 +160,13 @@ class BootstrapController extends CI_Controller
     {
         $container = new DIContainer();
 
-        $containerCfg = getattr($config['container'], array());
+        $containerCfg = a::ref($config['container'], array());
 
         foreach ($containerCfg as $k => $v) {
             $container[$k] = $v;
         }
 
-        $sharedContainerCfg = getattr($config['sharedContainer'], array());
+        $sharedContainerCfg = a::ref($config['sharedContainer'], array());
 
         foreach ($sharedContainerCfg as $k => $v) {
             $container->share($k, $v);

@@ -1,6 +1,8 @@
 <?php
 namespace Dispatcher\Http;
 
+use Dispatcher\Common\ArrayHelper as a;
+
 class HttpResponse implements HttpResponseInterface
 {
     protected $statusCode;
@@ -54,7 +56,7 @@ class HttpResponse implements HttpResponseInterface
 
     public function getHeader($key, $default = null)
     {
-        return getattr($this->headers[$key], $default);
+        return a::ref($this->headers[$key], $default);
     }
 
     public function setHeader($key, $value)
