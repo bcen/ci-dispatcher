@@ -38,9 +38,7 @@ abstract class DispatchableResource implements DispatchableInterface
                 $bundle['data'] = $object;
             } catch (ResourceNotFoundException $ex) {
                 $bundle['data']['error'] = 'Not Found';
-
-                return $this->createResponse(
-                    $bundle, array('statusCode' => 404));
+                return $this->finalizeResponse($bundle)->setStatusCode(404);
             }
         } else {
             $method = 'readCollection';
@@ -49,13 +47,14 @@ abstract class DispatchableResource implements DispatchableInterface
             $objects = $this->$method($request);
             $objects = is_array($objects) ? $objects : array();
             $bundle['data']['objects'] = $objects;
-            // $this->applySortingOn($bundle);
+
+            $this->applySortingOn($bundle);
             $this->applyPaginationOn($bundle);
         }
 
         $this->applyDehydrationOn($bundle);
 
-        return $this->createResponse($bundle);
+        return $this->finalizeResponse($bundle);
     }
 
     public function post(HttpRequestInterface $request,
@@ -65,7 +64,7 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (!empty($uriSegments)) {
             $bundle['data']['error'] = 'Method Not Allowed';
-            return $this->createResponse($bundle, array('statusCode' => 405));
+            return $this->finalizeResponse($bundle)->setStatusCode(405);
         }
 
         $method = 'createObject';
@@ -75,7 +74,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $bundle['data'] = $this->$method($request, $bundle);
 
         // TODO: add a real location header
-        return $this->createResponse($bundle)
+        return $this->finalizeResponse($bundle)
             ->setStatusCode(201)
             ->setHeader('Location', 'http://www.google.com/');
     }
@@ -87,7 +86,7 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (empty($uriSegments) || count($uriSegments) >= 2) {
             $bundle['data']['error'] = 'Method Not Allowed';
-            return $this->createResponse($bundle)->setStatusCode(405);
+            return $this->finalizeResponse($bundle)->setStatusCode(405);
         }
 
         $method = 'updateObject';
@@ -96,7 +95,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->applyHydrationOn($bundle);
         $bundle['data'] = $this->$method($request, $bundle);
 
-        return $this->createResponse($bundle)->setStatusCode(202);
+        return $this->finalizeResponse($bundle)->setStatusCode(202);
     }
 
     public function delete(HttpRequestInterface $request,
@@ -106,7 +105,7 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (empty($uriSegments) || count($uriSegments) >= 2) {
             $bundle['data']['error'] = 'Method Not Allowed';
-            return $this->createResponse($bundle)->setStatusCode(405);
+            return $this->finalizeResponse($bundle)->setStatusCode(405);
         }
 
         $method = 'deleteObject';
@@ -115,7 +114,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->applyHydrationOn($bundle);
         $bundle['data'] = $this->$method($request, $bundle);
 
-        return $this->createResponse($bundle);
+        return $this->finalizeResponse($bundle);
     }
 
     public function doDispatch(HttpRequestInterface $request,
@@ -132,7 +131,7 @@ abstract class DispatchableResource implements DispatchableInterface
         if (!$response instanceof HttpResponseInterface) {
             $bundle = $this->createBundle($request);
             $bundle['data']['error'] = 'Server Side Error';
-            $response = $this->createResponse($bundle)->setStatusCode(500);
+            $response = $this->finalizeResponse($bundle)->setStatusCode(500);
             throw new DispatchingException(
                 "$method must return HttpResponseInterface", $response);
         }
@@ -171,7 +170,7 @@ abstract class DispatchableResource implements DispatchableInterface
         if (empty($allowed)) {
             $bundle = $this->createBundle($request);
             $bundle['data']['error'] = 'Method Not Allowed';
-            $response = $this->createResponse($bundle)->setStatusCode(405);
+            $response = $this->finalizeResponse($bundle)->setStatusCode(405);
             throw new HttpErrorException('Method Not Allowed', $response);
         }
     }
@@ -189,19 +188,28 @@ abstract class DispatchableResource implements DispatchableInterface
         return array('message' => 'readSchema');
     }
 
-    protected function createResponse(array $bundle,
-                                      array $kwargs = array())
+    /**
+     * @param array $bundle
+     * @return \Dispatcher\Http\HttpResponseInterface
+     */
+    protected function finalizeResponse(array $bundle)
     {
         $contentType = $this->detectSupportedContentType($bundle['request']);
         $this->applySerializationOn($bundle, $contentType);
 
-        $statusCode = getattr($kwargs['statusCode'], 200);
-        $headers = getattr($kwargs['headers'], array());
-        $content = getattr($bundle['data'], '');
+        $response = $bundle['response'];
+        $response->setContent(getattr($bundle['data'], ''))
+                 ->setContentType($contentType);
 
-        $response = new HttpResponse($statusCode, $content, $headers);
-        $response->setContentType($contentType);
         return $response;
+    }
+
+    /**
+     * @return \Dispatcher\Http\HttpResponse;
+     */
+    protected function createRawResponse()
+    {
+        return new HttpResponse();
     }
 
     protected function createBundle(HttpRequestInterface $request,
@@ -210,9 +218,14 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $bundle = array_merge($kwargs, array(
             'request' => $request,
+            'response' => $this->createRawResponse(),
             'data' => $data
         ));
         return $bundle;
+    }
+
+    protected function applySortingOn(array &$bundle)
+    {
     }
 
     protected function applyPaginationOn(array &$bundle)
@@ -303,7 +316,7 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         if (!method_exists($this, $method)) {
             $bundle['data']['error'] = 'Server Side Error';
-            $response = $this->createResponse($bundle)->setStatusCode(500);
+            $response = $this->finalizeResponse($bundle)->setStatusCode(500);
             throw new DispatchingException(
                 "Please implement $method for your resource", $response);
         }
