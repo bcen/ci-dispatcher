@@ -198,7 +198,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $contentType = $this->detectSupportedContentType($bundle['request']);
         $this->applySerializationOn($bundle, $contentType);
 
-        $response = $bundle['response'];
+        $response = a::ref($bundle['response'], $this->createRawResponse());
         $response->setContent(a::ref($bundle['data'], ''))
                  ->setContentType($contentType);
 
