@@ -25,4 +25,33 @@ class ArrayHelperTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNull(a::ref($ary['somekey']));
     }
+
+    /**
+     * @test
+     */
+    public function ref_should_return_same_obj_hash_from_array_element()
+    {
+        $obj = new \stdClass();
+        $expectedHash = spl_object_hash($obj);
+        $ary = array('obj' => $obj);
+
+        $newObj = a::ref($ary['obj']);
+        $actualHash = spl_object_hash($newObj);
+
+        $this->assertEquals($expectedHash, $actualHash);
+    }
+
+    /**
+     * @test
+     */
+    public function ref_should_return_same_obj_hash_for_default()
+    {
+        $obj = new \stdClass();
+        $expectedHash = spl_object_hash($obj);
+
+        $newObj = a::ref($ary['obj'], $obj);
+        $actualHash = spl_object_hash($newObj);
+
+        $this->assertEquals($expectedHash, $actualHash);
+    }
 }
