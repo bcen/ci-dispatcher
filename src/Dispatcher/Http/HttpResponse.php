@@ -92,7 +92,7 @@ class HttpResponse implements HttpResponseInterface
         $this->getCI()->output->set_content_type($this->getContentType());
 
         foreach ($this->getHeaders() as $k => $v) {
-            $this->output->set_header($k . ': ' . $v);
+            $this->getCI()->output->set_header($k . ': ' . $v);
         }
 
         $this->getCI()->output->set_status_header($this->getStatusCode());
