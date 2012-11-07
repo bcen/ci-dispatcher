@@ -68,23 +68,23 @@ class HttpRequest implements HttpRequestInterface
             $this->get($key, $default, $sanitize), $sanitize);
     }
 
-    public function getCookie($key, $default = null, $sanitize = true)
+    public function getCookie($key, $default = null, $sanitize = false)
     {
         return $this->_fetch(
             $this->_ci()->input->cookie($key, $sanitize), $default);
     }
 
-    public function getHeader($key, $default = null)
+    public function getHeader($key, $default = null, $sanitize = false)
     {
         return $this->_fetch(
-            $this->_ci()->input->get_request_header(ucfirst($key), true),
+            $this->_ci()->input->get_request_header(ucfirst($key), $sanitize),
             $default);
     }
 
-    public function getServerParam($key, $default = null)
+    public function getServerParam($key, $default = null, $sanitize = false)
     {
         return $this->_fetch(
-            $this->_ci()->input->server($key, true), $default);
+            $this->_ci()->input->server($key, $sanitize), $default);
     }
 
     public function getScheme()

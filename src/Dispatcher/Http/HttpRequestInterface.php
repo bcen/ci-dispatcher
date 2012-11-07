@@ -84,25 +84,28 @@ interface HttpRequestInterface
      * Retrieves the cookie value with the given $key.
      * @param string $key     The name of the cookie
      * @param mixed  $default The default value if cookie is not found
+     * @param bool   $sanitize
      * @return mixed          Returns the value or null if cookie is not found
      */
-    public function getCookie($key, $default = null);
+    public function getCookie($key, $default = null, $sanitize = false);
 
     /**
      * Retrieves the header value with the given $key.
      * @param string $key     The name of the header
      * @param mixed  $default The default value if header is not found
+     * @param bool   $sanitize
      * @return mixed          Returns the value or null if header is not found
      */
-    public function getHeader($key, $default = null);
+    public function getHeader($key, $default = null, $sanitize = false);
 
     /**
      * Retrieves value from $_SERVER with the given $key.
      * @param string $key     The name of the param
      * @param mixed  $default The default value for non-existent param
+     * @param bool   $sanitize
      * @return mixed          Returns the value or null
      */
-    public function getServerParam($key, $default = null);
+    public function getServerParam($key, $default = null, $sanitize = false);
 
     /**
      * Gets the server shceme.
