@@ -68,7 +68,7 @@ class ResourceBundle implements \ArrayAccess
         return array_key_exists($offset, $this->_attr);
     }
 
-    public function offsetGet($offset)
+    public function &offsetGet($offset)
     {
         if (!array_key_exists($offset, $this->_attr)) {
             throw new \InvalidArgumentException("$offset does not exists");

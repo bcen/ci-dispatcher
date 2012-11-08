@@ -249,9 +249,9 @@ abstract class DispatchableResource implements DispatchableInterface
         $bundle->setData($paginator->getPage());
 
         $response = $bundle->getResponse();
-        $response->setHeader('Page-Meta-Limit', $limit);
-        $response->setHeader('Page-Meta-Offset', $offset);
-        $response->setHeader('Page-Meta-Total', $paginator->getCount());
+        $response->setHeader('X-Page-Limit', $limit);
+        $response->setHeader('X-Page-Offset', $offset);
+        $response->setHeader('X-Page-Total', $paginator->getCount());
     }
 
     protected function applyHydrationOn(ResourceBundle $bundle)
