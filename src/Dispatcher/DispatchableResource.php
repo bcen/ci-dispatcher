@@ -27,7 +27,7 @@ abstract class DispatchableResource implements DispatchableInterface
             $method = 'readSchema';
             $this->methodCheck($method, $bundle);
 
-            $bundle['data'] = $this->$method($request);
+            $bundle['data'] = $this->$method($bundle);
         } elseif (!empty($uriSegments)) {
             $method = 'readObject';
             $this->methodCheck($method, $bundle);
@@ -35,19 +35,19 @@ abstract class DispatchableResource implements DispatchableInterface
             $id = array_shift($uriSegments);
 
             try {
-                $object = $this->$method($request, $id, $uriSegments);
+                $object = $this->$method($bundle, $id, $uriSegments);
                 $bundle['data'] = $object;
             } catch (ResourceNotFoundException $ex) {
-                $bundle['data']['error'] = 'Not Found';
+                $bundle['data'] = array('error' => 'Not Found');
                 return $this->finalizeResponse($bundle)->setStatusCode(404);
             }
         } else {
             $method = 'readCollection';
             $this->methodCheck($method, $bundle);
 
-            $objects = $this->$method($request);
+            $objects = $this->$method($bundle);
             $objects = is_array($objects) ? $objects : array();
-            $bundle['data']['objects'] = $objects;
+            $bundle['data'] = array('objects' => $objects);
 
             $this->applySortingOn($bundle);
             $this->applyPaginationOn($bundle);
@@ -184,7 +184,7 @@ abstract class DispatchableResource implements DispatchableInterface
     {
     }
 
-    protected function readSchema(HttpRequestInterface $request)
+    protected function readSchema(array &$bundle)
     {
         return array('message' => 'readSchema');
     }
@@ -242,6 +242,11 @@ abstract class DispatchableResource implements DispatchableInterface
             ->setLimit($limit);
 
         $bundle['data'] = $paginator->getPage();
+
+        $response = $bundle['response'];
+        $response->setHeader('Page-Meta-Limit', $limit);
+        $response->setHeader('Page-Meta-Offset', $offset);
+        $response->setHeader('Page-Meta-Total', $paginator->getCount());
     }
 
     protected function applyHydrationOn(array &$bundle)

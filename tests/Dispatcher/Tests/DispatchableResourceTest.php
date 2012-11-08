@@ -29,9 +29,7 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
 
         $controller->expects($this->once())
             ->method('readCollection')
-            ->with($this->isInstanceOf(
-                'Dispatcher\\Http\HttpRequestInterface'));
-
+            ->with($this->isType('array'));
 
         $controller->get($reqMock);
     }
