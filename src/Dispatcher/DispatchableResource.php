@@ -14,7 +14,7 @@ use Dispatcher\Common\ArrayHelper as a;
 abstract class DispatchableResource implements DispatchableInterface
 {
     /**
-     * @var \Dispatcher\Common\DefaultResourceOptions
+     * @var \Dispatcher\Common\ResourceOptionsInterface
      */
     private $options;
 
@@ -206,7 +206,7 @@ abstract class DispatchableResource implements DispatchableInterface
     }
 
     /**
-     * @return \Dispatcher\Http\HttpResponse;
+     * @return \Dispatcher\Http\HttpResponseInterface;
      */
     protected function createRawResponse()
     {
