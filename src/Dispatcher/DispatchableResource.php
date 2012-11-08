@@ -10,6 +10,7 @@ use Dispatcher\Exception\ResourceNotFoundException;
 use Dispatcher\Common\DefaultResourceOptions;
 use Dispatcher\Common\ResourceOptionsInterface;
 use Dispatcher\Common\ArrayHelper as a;
+use Dispatcher\Common\ResourceBundle;
 
 abstract class DispatchableResource implements DispatchableInterface
 {
@@ -27,7 +28,7 @@ abstract class DispatchableResource implements DispatchableInterface
             $method = 'readSchema';
             $this->methodCheck($method, $bundle);
 
-            $bundle['data'] = $this->$method($bundle);
+            $bundle->setData($this->$method($bundle));
         } elseif (!empty($uriSegments)) {
             $method = 'readObject';
             $this->methodCheck($method, $bundle);
@@ -36,9 +37,9 @@ abstract class DispatchableResource implements DispatchableInterface
 
             try {
                 $object = $this->$method($bundle, $id, $uriSegments);
-                $bundle['data'] = $object;
+                $bundle->setData($object);
             } catch (ResourceNotFoundException $ex) {
-                $bundle['data'] = array('error' => 'Not Found');
+                $bundle->setData(array('error' => 'Not Found'));
                 return $this->finalizeResponse($bundle)->setStatusCode(404);
             }
         } else {
@@ -47,7 +48,7 @@ abstract class DispatchableResource implements DispatchableInterface
 
             $objects = $this->$method($bundle);
             $objects = is_array($objects) ? $objects : array();
-            $bundle['data'] = array('objects' => $objects);
+            $bundle->setData(array('objects' => $objects));
 
             $this->applySortingOn($bundle);
             $this->applyPaginationOn($bundle);
@@ -64,7 +65,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $bundle = $this->createBundle($request);
 
         if (!empty($uriSegments)) {
-            $bundle['data']['error'] = 'Method Not Allowed';
+            $bundle->setData(array('error' => 'Method Not Allowed'));
             return $this->finalizeResponse($bundle)->setStatusCode(405);
         }
 
@@ -72,7 +73,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->methodCheck($method, $bundle);
 
         $this->applyHydrationOn($bundle);
-        $bundle['data'] = $this->$method($request, $bundle);
+        $bundle->setData($this->$method($request, $bundle));
 
         // TODO: add a real location header
         return $this->finalizeResponse($bundle)
@@ -86,7 +87,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $bundle = $this->createBundle($request);
 
         if (empty($uriSegments) || count($uriSegments) >= 2) {
-            $bundle['data']['error'] = 'Method Not Allowed';
+            $bundle->setData(array('error' => 'Method Not Allowed'));
             return $this->finalizeResponse($bundle)->setStatusCode(405);
         }
 
@@ -94,7 +95,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->methodCheck($method, $bundle);
 
         $this->applyHydrationOn($bundle);
-        $bundle['data'] = $this->$method($request, $bundle);
+        $bundle->setData($this->$method($bundle));
 
         return $this->finalizeResponse($bundle)->setStatusCode(202);
     }
@@ -105,7 +106,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $bundle = $this->createBundle($request);
 
         if (empty($uriSegments) || count($uriSegments) >= 2) {
-            $bundle['data']['error'] = 'Method Not Allowed';
+            $bundle->setData(array('error' => 'Method Not Allowed'));
             return $this->finalizeResponse($bundle)->setStatusCode(405);
         }
 
@@ -113,7 +114,7 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->methodCheck($method, $bundle);
 
         $this->applyHydrationOn($bundle);
-        $bundle['data'] = $this->$method($request, $bundle);
+        $bundle->setData($this->$method($bundle));
 
         return $this->finalizeResponse($bundle);
     }
@@ -184,22 +185,22 @@ abstract class DispatchableResource implements DispatchableInterface
     {
     }
 
-    protected function readSchema(array &$bundle)
+    protected function readSchema(ResourceBundle $bundle)
     {
         return array('message' => 'readSchema');
     }
 
     /**
-     * @param array $bundle
+     * @param \Dispatcher\Common\ResourceBundle $bundle
      * @return \Dispatcher\Http\HttpResponseInterface
      */
-    protected function finalizeResponse(array $bundle)
+    protected function finalizeResponse(ResourceBundle $bundle)
     {
-        $contentType = $this->detectSupportedContentType($bundle['request']);
+        $contentType = $this->detectSupportedContentType($bundle->getRequest());
         $this->applySerializationOn($bundle, $contentType);
 
-        $response = a::ref($bundle['response'], $this->createRawResponse());
-        $response->setContent(a::ref($bundle['data'], ''))
+        $response = $bundle->getResponse();
+        $response->setContent($bundle->getData())
                  ->setContentType($contentType);
 
         return $response;
@@ -217,53 +218,58 @@ abstract class DispatchableResource implements DispatchableInterface
                                     $data = null,
                                     array $kwargs = array())
     {
-        $bundle = array_merge($kwargs, array(
-            'request' => $request,
-            'response' => $this->createRawResponse(),
-            'data' => $data
-        ));
+        $bundle = new ResourceBundle();
+        $bundle->setRequest($request)
+            ->setResponse($this->createRawResponse())
+            ->setData($data);
+        foreach ($kwargs as $k => $v) {
+            $bundle[$k] = $v;
+        }
         return $bundle;
     }
 
-    protected function applySortingOn(array &$bundle)
+    protected function applySortingOn(ResourceBundle $bundle)
     {
     }
 
-    protected function applyPaginationOn(array &$bundle)
+    protected function applyPaginationOn(ResourceBundle $bundle)
     {
-        $req = $bundle['request'];
+        $req = $bundle->getRequest();
         $paginator = $this->getOptions()->getPaginator();
 
         $limit = (int)$req->get('limit', $this->getOptions()->getPageLimit());
         $offset = (int)$req->get('offset', 0);
 
-        $paginator->setQueryset(a::ref($bundle['data']['objects'], array()))
+        $data = $bundle->getData();
+        $queryset = a::ref($data['objects'], array());
+        $paginator->setQueryset($queryset)
             ->setOffset($offset)
             ->setLimit($limit);
 
-        $bundle['data'] = $paginator->getPage();
+        $bundle->setData($paginator->getPage());
 
-        $response = $bundle['response'];
+        $response = $bundle->getResponse();
         $response->setHeader('Page-Meta-Limit', $limit);
         $response->setHeader('Page-Meta-Offset', $offset);
         $response->setHeader('Page-Meta-Total', $paginator->getCount());
     }
 
-    protected function applyHydrationOn(array &$bundle)
+    protected function applyHydrationOn(ResourceBundle $bundle)
     {
         // Prepares data from unserialized data back to PHP
     }
 
-    protected function applyDehydrationOn(array &$bundle)
+    protected function applyDehydrationOn(ResourceBundle $bundle)
     {
         // Prepares data from PHP to be serialized
     }
 
-    protected function applySerializationOn(array &$bundle, $contentType)
+    protected function applySerializationOn(ResourceBundle $bundle, $contentType)
     {
-        $data = a::ref($bundle['data'], '');
-        $bundle['data'] = (is_array($data) || is_object($data))
+        $data = $bundle->getData();
+        $data = (is_array($data) || is_object($data))
             ? json_encode($data) : '';
+        $bundle->setData($data);
     }
 
     /**
@@ -318,10 +324,10 @@ abstract class DispatchableResource implements DispatchableInterface
         return $this;
     }
 
-    private function methodCheck($method, array $bundle)
+    private function methodCheck($method, ResourceBundle $bundle)
     {
         if (!method_exists($this, $method)) {
-            $bundle['data']['error'] = 'Server Side Error';
+            $bundle->setData(array('error' => 'Server Side Error'));
             $response = $this->finalizeResponse($bundle)->setStatusCode(500);
             throw new DispatchingException(
                 "Please implement $method for your resource", $response);

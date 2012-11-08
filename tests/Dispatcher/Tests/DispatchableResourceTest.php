@@ -19,7 +19,7 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function invoke_get_without_uri_segments_should_invoke_readCollection_with_request_as_argument()
+    public function invoke_get_without_uri_segments_should_invoke_readCollection_with_ResourceBundle_as_argument()
     {
         $reqMock = $this->mockRequest('GET');
 
@@ -29,7 +29,7 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
 
         $controller->expects($this->once())
             ->method('readCollection')
-            ->with($this->isType('array'));
+            ->with($this->isInstanceOf('Dispatcher\\Common\\ResourceBundle'));
 
         $controller->get($reqMock);
     }

@@ -29,7 +29,7 @@ class ResourceBundle implements \ArrayAccess
     public function getData($key = null, $default = null)
     {
         if (!$key) {
-            return $this->_attr['data'];
+            return a::ref($this->_attr['data'], null);
         }
 
         return a::ref($this->_attr['data'][$key], $default);
@@ -41,6 +41,9 @@ class ResourceBundle implements \ArrayAccess
         return $this;
     }
 
+    /**
+     * @return \Dispatcher\Http\HttpResponseInterface
+     */
     public function getResponse()
     {
         return $this->response;
@@ -52,6 +55,9 @@ class ResourceBundle implements \ArrayAccess
         return $this;
     }
 
+    /**
+     * @return \Dispatcher\Http\HttpRequestInterface
+     */
     public function getRequest()
     {
         return $this->request;
