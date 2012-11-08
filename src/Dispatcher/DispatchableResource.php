@@ -19,42 +19,51 @@ abstract class DispatchableResource implements DispatchableInterface
      */
     private $options;
 
+    public function readSchema(ResourceBundle $bundle)
+    {
+        return array('message' => 'readSchema');
+    }
+
+    public function readObject(ResourceBundle $bundle, $id, array $uriSegments)
+    {
+        $this->notImplemented($bundle->getRequest());
+    }
+
+    public function readCollection(ResourceBundle $bundle)
+    {
+        $this->notImplemented($bundle->getRequest());
+    }
+
+    public function createObject(ResourceBundle $bundle)
+    {
+        $this->notImplemented($bundle->getRequest());
+    }
+
     public function get(HttpRequestInterface $request,
                         array $uriSegments = array())
     {
         $bundle = $this->createBundle($request);
 
         if (count($uriSegments) === 1 && $uriSegments[0] === 'schema') {
-            $method = 'readSchema';
-            $this->methodCheck($method, $bundle);
-
-            $bundle->setData($this->$method($bundle));
+            $bundle->setData($this->readSchema($bundle));
         } elseif (!empty($uriSegments)) {
-            $method = 'readObject';
-            $this->methodCheck($method, $bundle);
-
             $id = array_shift($uriSegments);
 
             try {
-                $object = $this->$method($bundle, $id, $uriSegments);
+                $object = $this->readObject($bundle, $id, $uriSegments);
                 $bundle->setData($object);
             } catch (ResourceNotFoundException $ex) {
                 $bundle->setData(array('error' => 'Not Found'));
                 return $this->finalizeResponse($bundle)->setStatusCode(404);
             }
         } else {
-            $method = 'readCollection';
-            $this->methodCheck($method, $bundle);
-
-            $objects = $this->$method($bundle);
+            $objects = $this->readCollection($bundle);
             $objects = is_array($objects) ? $objects : array();
             $bundle->setData(array('objects' => $objects));
 
             $this->applySortingOn($bundle);
             $this->applyPaginationOn($bundle);
         }
-
-        $this->applyDehydrationOn($bundle);
 
         return $this->finalizeResponse($bundle);
     }
@@ -69,16 +78,15 @@ abstract class DispatchableResource implements DispatchableInterface
             return $this->finalizeResponse($bundle)->setStatusCode(405);
         }
 
-        $method = 'createObject';
-        $this->methodCheck($method, $bundle);
+        $bundle->setData($this->createObject($bundle));
 
-        $this->applyHydrationOn($bundle);
-        $bundle->setData($this->$method($request, $bundle));
+        $id = a::ref($bundle['data']['id']);
+        if ($id) {
+            $bundle->getResponse()->setHeader(
+                'Location', rtrim($request->getUrl(), '/') . '/' . $id);
+        }
 
-        // TODO: add a real location header
-        return $this->finalizeResponse($bundle)
-            ->setStatusCode(201)
-            ->setHeader('Location', 'http://www.google.com/');
+        return $this->finalizeResponse($bundle)->setStatusCode(201);
     }
 
     public function put(HttpRequestInterface $request,
@@ -94,7 +102,6 @@ abstract class DispatchableResource implements DispatchableInterface
         $method = 'updateObject';
         $this->methodCheck($method, $bundle);
 
-        $this->applyHydrationOn($bundle);
         $bundle->setData($this->$method($bundle));
 
         return $this->finalizeResponse($bundle)->setStatusCode(202);
@@ -185,17 +192,14 @@ abstract class DispatchableResource implements DispatchableInterface
     {
     }
 
-    protected function readSchema(ResourceBundle $bundle)
-    {
-        return array('message' => 'readSchema');
-    }
-
     /**
      * @param \Dispatcher\Common\ResourceBundle $bundle
      * @return \Dispatcher\Http\HttpResponseInterface
      */
     protected function finalizeResponse(ResourceBundle $bundle)
     {
+        $this->applyDehydrationOn($bundle);
+
         $contentType = $this->detectSupportedContentType($bundle->getRequest());
         $this->applySerializationOn($bundle, $contentType);
 
@@ -225,6 +229,7 @@ abstract class DispatchableResource implements DispatchableInterface
         foreach ($kwargs as $k => $v) {
             $bundle[$k] = $v;
         }
+        $this->applyHydrationOn($bundle);
         return $bundle;
     }
 
@@ -332,5 +337,14 @@ abstract class DispatchableResource implements DispatchableInterface
             throw new DispatchingException(
                 "Please implement $method for your resource", $response);
         }
+    }
+
+    protected function notImplemented(HttpRequestInterface $request)
+    {
+        $bundle = $this->createBundle($request);
+        $bundle['data']['error'] = 'Method Not Implemented';
+        $bundle->getResponse()->setStatusCode(501);
+        throw new DispatchingException('Method not implemented',
+            $this->finalizeResponse($bundle));
     }
 }
