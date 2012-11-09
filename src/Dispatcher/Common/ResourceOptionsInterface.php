@@ -16,4 +16,7 @@ interface ResourceOptionsInterface
     public function setPaginator(PaginatorInterface $paginator);
     public function getPageLimit();
     public function setPageLimit($limit);
+    public function enableSubresource();
+    public function disableSubresource();
+    public function handleSubresource();
 }

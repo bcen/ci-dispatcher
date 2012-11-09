@@ -117,4 +117,24 @@ class DefaultResourceOptions implements ResourceOptionsInterface
         $this->options['pageLimit'] = $limit;
         return $this;
     }
+
+    public function enableSubresource()
+    {
+        $this->options['handleSubresource'] = true;
+        return $this;
+    }
+
+    public function disableSubresource()
+    {
+        $this->options['handleSubresource'] = false;
+        return $this;
+    }
+
+    public function handleSubresource()
+    {
+        if (isset($this->options['handleSubresource'])) {
+            return $this->options['handleSubresource'];
+        }
+        return false;
+    }
 }
