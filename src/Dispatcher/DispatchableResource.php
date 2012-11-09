@@ -21,10 +21,18 @@ abstract class DispatchableResource implements DispatchableInterface
 
     public function readSchema(ResourceBundle $bundle)
     {
-        return array('message' => 'readSchema');
+        return array(
+            'meta' => array(
+                'defaultFormat' => $this->getOptions()->getDefaultFormat(),
+                'supportedFormats' => $this->getOptions()->getSupportedFormats(),
+                'allowedMethods' => $this->getOptions()->getAllowedMethods()
+            )
+        );
     }
 
-    public function readObject(ResourceBundle $bundle, $id, array $uriSegments)
+    public function readObject(ResourceBundle $bundle,
+                               $id,
+                               array $uriSegments = array())
     {
         $this->notImplemented($bundle->getRequest());
     }
@@ -34,8 +42,20 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->notImplemented($bundle->getRequest());
     }
 
-    public function createObject(ResourceBundle $bundle)
+    public function createObject(ResourceBundle $bundle,
+                                 array $uriSegments = array())
     {
+        $this->notImplemented($bundle->getRequest());
+    }
+
+    public function updateObject(ResourceBundle $bundle,
+                                 $id,
+                                 array $uriSegments = array())
+    {
+        $this->notImplemented($bundle->getRequest());
+    }
+
+    public function updateCollection(ResourceBundle $bundle) {
         $this->notImplemented($bundle->getRequest());
     }
 
@@ -45,11 +65,20 @@ abstract class DispatchableResource implements DispatchableInterface
         $bundle = $this->createBundle($request);
 
         if (count($uriSegments) === 1 && $uriSegments[0] === 'schema') {
+            // get.schema
             $bundle->setData($this->readSchema($bundle));
         } elseif (!empty($uriSegments)) {
-            $id = array_shift($uriSegments);
 
+            // get.detail
             try {
+                // Do we handle subresource?
+                if (count($uriSegments) > 1
+                        && !$this->getOptions()->handleSubresource()) {
+                    throw new ResourceNotFoundException(
+                        'Does not support subresource');
+                }
+
+                $id = array_shift($uriSegments);
                 $object = $this->readObject($bundle, $id, $uriSegments);
                 $bundle->setData($object);
             } catch (ResourceNotFoundException $ex) {
@@ -57,6 +86,8 @@ abstract class DispatchableResource implements DispatchableInterface
                 return $this->finalizeResponse($bundle)->setStatusCode(404);
             }
         } else {
+
+            // get.list
             $objects = $this->readCollection($bundle);
             $objects = is_array($objects) ? $objects : array();
             $bundle->setData(array('objects' => $objects));
@@ -73,12 +104,12 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $bundle = $this->createBundle($request);
 
-        if (!empty($uriSegments)) {
+        if (!empty($uriSegments) && !$this->getOptions()->handleSubresource()) {
             $bundle->setData(array('error' => 'Method Not Allowed'));
             return $this->finalizeResponse($bundle)->setStatusCode(405);
         }
 
-        $bundle->setData($this->createObject($bundle));
+        $bundle->setData($this->createObject($bundle, $uriSegments));
 
         $id = a::ref($bundle['data']['id']);
         if ($id) {
@@ -94,15 +125,16 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $bundle = $this->createBundle($request);
 
-        if (empty($uriSegments) || count($uriSegments) >= 2) {
+        if (count($uriSegments) >= 2
+                && !$this->getOptions()->handleSubresource()) {
             $bundle->setData(array('error' => 'Method Not Allowed'));
             return $this->finalizeResponse($bundle)->setStatusCode(405);
+        } elseif (empty($uriSegments)) {
+            $bundle->setData($this->updateCollection($bundle));
+        } else {
+            $id = array_shift($uriSegments);
+            $bundle->setData($this->updateObject($bundle, $id, $uriSegments));
         }
-
-        $method = 'updateObject';
-        $this->methodCheck($method, $bundle);
-
-        $bundle->setData($this->$method($bundle));
 
         return $this->finalizeResponse($bundle)->setStatusCode(202);
     }

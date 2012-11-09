@@ -37,28 +37,6 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function invoke_get_with_uri_segments_and_without_readObject_should_throw_DispatchingException_with_response()
-    {
-        $reqMock = $this->mockRequest('GET');
-
-        $controller = $this->getMock('Dispatcher\\DispatchableResource',
-            array('some'));
-        $controller->expects($this->never())
-            ->method('some');
-
-        try {
-            $controller->get($reqMock, array(1, 2, 3));
-        } catch (\Dispatcher\Exception\DispatchingException $ex) {
-            $this->assertNotNull($ex->getResponse());
-            return;
-        }
-
-        $this->fail();
-    }
-
-    /**
-     * @test
-     */
     public function invoke_get_without_uri_segments_and_without_readCollection_should_throw_DispatchingException_with_response()
     {
         $reqMock = $this->mockRequest('GET');
@@ -108,23 +86,6 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
             ->method('readObject');
 
         $controller->get($reqMock, array('some-id'));
-    }
-
-    /**
-     * @test
-     */
-    public function invoke_get_with_schema_and_uri_as_arguments_should_invoke_readObject()
-    {
-        $reqMock = $this->mockRequest('GET');
-
-        $controller = $this->getMock('Dispatcher\\DispatchableResource',
-            array('readObject'));
-
-        $controller->expects($this->once())
-            ->method('readObject')
-            ->with($this->anything(), $this->equalTo('schema'));
-
-        $controller->get($reqMock, array('schema', 'someargs', 'arg3'));
     }
 
     /**
@@ -304,22 +265,6 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function invoke_put_without_uri_should_return_method_not_allowed()
-    {
-        $reqMock = $this->mockRequest('PUT');
-
-        $controller = $this->getMock('Dispatcher\\DispatchableResource',
-            array('updateObject'));
-        $controller->expects($this->never())
-            ->method('updateObject');
-
-        $response = $controller->put($reqMock);
-        $this->assertEquals(405, $response->getStatusCode());
-    }
-
-    /**
-     * @test
-     */
     public function invoke_put_with_2_uri_segments_should_return_method_not_allowed()
     {
         $reqMock = $this->mockRequest('PUT');
@@ -346,5 +291,38 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
             ->method('updateObject');
 
         $controller->put($reqMock, array('0302'));
+    }
+
+    /**
+     * @test
+     */
+    public function readSchema_should_return_basic_options()
+    {
+        $reqMock = $this->mockRequest('GET');
+        $options = new \Dispatcher\Common\DefaultResourceOptions();
+        $options->setAllowedMethods(array('GET', 'POST'))
+                ->setSupportedFormats(array('application/lolformat'));
+
+        $controller = $this->getMock('Dispatcher\\DispatchableResource',
+            array('getOptions'));
+        $controller->expects($this->any())
+            ->method('getOptions')
+            ->will($this->returnValue($options));
+
+        $response = $controller->get($reqMock, array('schema'));
+        $this->assertEquals(preg_replace('/[\s]+/', '', '
+            {
+                "meta": {
+                    "defaultFormat": "application\/lolformat",
+                    "supportedFormats": [
+                        "application\/lolformat"
+                    ],
+                    "allowedMethods": [
+                        "GET",
+                        "POST"
+                    ]
+                }
+            }
+        '), $response->getContent());
     }
 }
