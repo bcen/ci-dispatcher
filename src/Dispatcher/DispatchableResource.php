@@ -59,17 +59,28 @@ abstract class DispatchableResource implements DispatchableInterface
         $this->notImplemented($bundle->getRequest());
     }
 
+    public function deleteObject(ResourceBundle $bundle,
+                                 $id,
+                                 array $uriSegments = array())
+    {
+        $this->notImplemented($bundle->getRequest());
+    }
+
+    public function deleteCollection(ResourceBundle $bundle)
+    {
+        $this->notImplemented($bundle->getRequest());
+    }
+
     public function get(HttpRequestInterface $request,
                         array $uriSegments = array())
     {
         $bundle = $this->createBundle($request);
 
         if (count($uriSegments) === 1 && $uriSegments[0] === 'schema') {
-            // get.schema
+            // GET /schema
             $bundle->setData($this->readSchema($bundle));
         } elseif (!empty($uriSegments)) {
-
-            // get.detail
+            // GET /{resourceName}/{uriSegments}+
             try {
                 // Do we handle subresource?
                 if (count($uriSegments) > 1
@@ -82,16 +93,15 @@ abstract class DispatchableResource implements DispatchableInterface
                 $object = $this->readObject($bundle, $id, $uriSegments);
                 $bundle->setData($object);
             } catch (ResourceNotFoundException $ex) {
-                $bundle->setData(array('error' => 'Not Found'));
-                return $this->finalizeResponse($bundle)->setStatusCode(404);
+                $bundle->setData(array('error' => 'Not Found'))
+                       ->getResponse()->setStatusCode(404);
+                return $this->finalizeResponse($bundle);
             }
         } else {
-
-            // get.list
+            // GET /{resourceName}/
             $objects = $this->readCollection($bundle);
             $objects = is_array($objects) ? $objects : array();
             $bundle->setData(array('objects' => $objects));
-
             $this->applySortingOn($bundle);
             $this->applyPaginationOn($bundle);
         }
@@ -105,8 +115,9 @@ abstract class DispatchableResource implements DispatchableInterface
         $bundle = $this->createBundle($request);
 
         if (!empty($uriSegments) && !$this->getOptions()->handleSubresource()) {
-            $bundle->setData(array('error' => 'Method Not Allowed'));
-            return $this->finalizeResponse($bundle)->setStatusCode(405);
+            $bundle->setData(array('error' => 'Method Not Allowed'))
+                   ->getResponse()->setStatusCode(405);
+            return $this->finalizeResponse($bundle);
         }
 
         $bundle->setData($this->createObject($bundle, $uriSegments));
@@ -114,10 +125,11 @@ abstract class DispatchableResource implements DispatchableInterface
         $id = a::ref($bundle['data']['id']);
         if ($id) {
             $bundle->getResponse()->setHeader(
-                'Location', rtrim($request->getUrl(), '/') . '/' . $id);
+                'Location', rtrim($request->getUrl(), '/') . '/' . $id
+            );
         }
-
-        return $this->finalizeResponse($bundle)->setStatusCode(201);
+        $bundle->getResponse()->setStatusCode(201);
+        return $this->finalizeResponse($bundle);
     }
 
     public function put(HttpRequestInterface $request,
@@ -127,16 +139,17 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (count($uriSegments) >= 2
                 && !$this->getOptions()->handleSubresource()) {
-            $bundle->setData(array('error' => 'Method Not Allowed'));
-            return $this->finalizeResponse($bundle)->setStatusCode(405);
+            $bundle->setData(array('error' => 'Method Not Allowed'))
+                   ->getResponse()->setStatusCode(405);
+            return $this->finalizeResponse($bundle);
         } elseif (empty($uriSegments)) {
             $bundle->setData($this->updateCollection($bundle));
         } else {
             $id = array_shift($uriSegments);
             $bundle->setData($this->updateObject($bundle, $id, $uriSegments));
         }
-
-        return $this->finalizeResponse($bundle)->setStatusCode(202);
+        $bundle->getResponse()->setStatusCode(202);
+        return $this->finalizeResponse($bundle);
     }
 
     public function delete(HttpRequestInterface $request,
@@ -144,16 +157,17 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $bundle = $this->createBundle($request);
 
-        if (empty($uriSegments) || count($uriSegments) >= 2) {
-            $bundle->setData(array('error' => 'Method Not Allowed'));
-            return $this->finalizeResponse($bundle)->setStatusCode(405);
+        if (count($uriSegments) >= 2
+                && !$this->getOptions()->handleSubresource()) {
+            $bundle->setData(array('error' => 'Method Not Allowed'))
+                   ->getResponse()->setStatusCode(405);
+            return $this->finalizeResponse($bundle);
+        } elseif (empty($uriSegments)) {
+            $bundle->setData($this->deleteCollection($bundle));
+        } else {
+            $id = array_shift($uriSegments);
+            $bundle->setData($this->deleteObject($bundle, $id));
         }
-
-        $method = 'deleteObject';
-        $this->methodCheck($method, $bundle);
-
-        $this->applyHydrationOn($bundle);
-        $bundle->setData($this->$method($bundle));
 
         return $this->finalizeResponse($bundle);
     }
@@ -171,10 +185,12 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (!$response instanceof HttpResponseInterface) {
             $bundle = $this->createBundle($request);
-            $bundle['data']['error'] = 'Server Side Error';
-            $response = $this->finalizeResponse($bundle)->setStatusCode(500);
+            $bundle->setData(array('error' => 'Server Side Error'))
+                   ->getResponse()->setStatusCode(500);
             throw new DispatchingException(
-                "$method must return HttpResponseInterface", $response);
+                "$method must return HttpResponseInterface",
+                $this->finalizeResponse($bundle)
+            );
         }
 
         return $response;
@@ -210,9 +226,10 @@ abstract class DispatchableResource implements DispatchableInterface
 
         if (empty($allowed)) {
             $bundle = $this->createBundle($request);
-            $bundle['data']['error'] = 'Method Not Allowed';
-            $response = $this->finalizeResponse($bundle)->setStatusCode(405);
-            throw new HttpErrorException('Method Not Allowed', $response);
+            $bundle->setData(array('error' => 'Method Not Allowed'))
+                   ->getResponse()->setStatusCode(405);
+            throw new HttpErrorException('Method Not Allowed',
+                $this->finalizeResponse($bundle));
         }
     }
 
@@ -225,6 +242,8 @@ abstract class DispatchableResource implements DispatchableInterface
     }
 
     /**
+     * Dehydrates and serializes the data, then finalizes the resposne from
+     * bundle.
      * @param \Dispatcher\Common\ResourceBundle $bundle
      * @return \Dispatcher\Http\HttpResponseInterface
      */
@@ -232,6 +251,8 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $this->applyDehydrationOn($bundle);
 
+        // It is safe to not checking for null,
+        // since we passed the contentNegotiationCheck already.
         $contentType = $this->detectSupportedContentType($bundle->getRequest());
         $this->applySerializationOn($bundle, $contentType);
 
@@ -256,11 +277,15 @@ abstract class DispatchableResource implements DispatchableInterface
     {
         $bundle = new ResourceBundle();
         $bundle->setRequest($request)
-            ->setResponse($this->createRawResponse())
-            ->setData($data);
+               ->setResponse($this->createRawResponse())
+               ->setData($data);
+
+        // bind all extra stuff too
+        // NOTE: Can override data
         foreach ($kwargs as $k => $v) {
             $bundle[$k] = $v;
         }
+        $this->applyDeserializationOn($bundle);
         $this->applyHydrationOn($bundle);
         return $bundle;
     }
@@ -277,11 +302,9 @@ abstract class DispatchableResource implements DispatchableInterface
         $limit = (int)$req->get('limit', $this->getOptions()->getPageLimit());
         $offset = (int)$req->get('offset', 0);
 
-        $data = $bundle->getData();
-        $queryset = a::ref($data['objects'], array());
-        $paginator->setQueryset($queryset)
-            ->setOffset($offset)
-            ->setLimit($limit);
+        $paginator->setQueryset($bundle->getData('objects', array()))
+                  ->setOffset($offset)
+                  ->setLimit($limit);
 
         $bundle->setData($paginator->getPage());
 
@@ -307,6 +330,10 @@ abstract class DispatchableResource implements DispatchableInterface
         $data = (is_array($data) || is_object($data))
             ? json_encode($data) : '';
         $bundle->setData($data);
+    }
+
+    protected function applyDeserializationOn(ResourceBundle $bundle)
+    {
     }
 
     /**
@@ -361,22 +388,21 @@ abstract class DispatchableResource implements DispatchableInterface
         return $this;
     }
 
-    private function methodCheck($method, ResourceBundle $bundle)
-    {
-        if (!method_exists($this, $method)) {
-            $bundle->setData(array('error' => 'Server Side Error'));
-            $response = $this->finalizeResponse($bundle)->setStatusCode(500);
-            throw new DispatchingException(
-                "Please implement $method for your resource", $response);
-        }
-    }
-
     protected function notImplemented(HttpRequestInterface $request)
     {
         $bundle = $this->createBundle($request);
-        $bundle['data']['error'] = 'Method Not Implemented';
-        $bundle->getResponse()->setStatusCode(501);
+        $bundle->setData(array('error' => 'Method Not Implemented'))
+               ->getResponse()->setStatusCode(501);
         throw new DispatchingException('Method not implemented',
+            $this->finalizeResponse($bundle));
+    }
+
+    protected function methodNotAllowed(HttpRequestInterface $request)
+    {
+        $bundle = $this->createBundle($request);
+        $bundle->setData(array('error' => 'Method Not Allowed'))
+               ->getResponse()->setStatusCode(405);
+        throw new HttpErrorException('Method Not Allowed',
             $this->finalizeResponse($bundle));
     }
 }
