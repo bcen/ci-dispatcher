@@ -12,6 +12,7 @@ class ViewTemplateResponse extends HttpResponse
     {
         parent::__construct($statusCode, $content, $headers);
         $this->setViews($views);
+        $this->setContent($views);
     }
 
     public function getViews()
