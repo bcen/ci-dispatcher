@@ -70,9 +70,7 @@ class HttpRequest implements HttpRequestInterface
 
     public function getRawContent()
     {
-        $data = array();
-        parse_str(file_get_contents('php://input'), $data);
-        return $data;
+        return file_get_contents('php://input');
     }
 
     public function getCookie($key, $default = null, $sanitize = false)
