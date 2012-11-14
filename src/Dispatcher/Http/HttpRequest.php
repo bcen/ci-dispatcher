@@ -68,6 +68,13 @@ class HttpRequest implements HttpRequestInterface
             $this->get($key, $default, $sanitize), $sanitize);
     }
 
+    public function getRawContent()
+    {
+        $data = array();
+        parse_str(file_get_contents('php://input'), $data);
+        return $data;
+    }
+
     public function getCookie($key, $default = null, $sanitize = false)
     {
         return $this->_fetch(

@@ -63,6 +63,11 @@ final class DummyRequest implements HttpRequestInterface
         return $this->get($key, $default);
     }
 
+    public function getRawContent()
+    {
+        return a::ref($this->_data['rawContent']);
+    }
+
     public function getCookie($key, $default = null, $sanitize = false)
     {
         return a::ref($this->_data['cookie'], $default);

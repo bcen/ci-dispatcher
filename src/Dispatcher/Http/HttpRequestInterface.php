@@ -80,6 +80,8 @@ interface HttpRequestInterface
      */
     public function getParam($key, $default = null, $sanitize = false);
 
+    public function getRawContent();
+
     /**
      * Retrieves the cookie value with the given $key.
      * @param string $key     The name of the cookie
