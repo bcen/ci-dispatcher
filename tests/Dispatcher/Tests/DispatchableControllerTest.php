@@ -1,7 +1,6 @@
 <?php
 namespace Dispatcher\Tests;
 
-use Dispatcher\Http\JsonResponse;
 use Dispatcher\Exception\DispatchingException;
 
 class DispatchableControllerTest extends \PHPUnit_Framework_TestCase
@@ -9,127 +8,76 @@ class DispatchableControllerTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function get_with_view_and_data_should_return_ViewTemplateResponse_with_same_view_and_data()
+    public function doDispatch_with_unavailable_request_handler_should_return_501_response()
     {
-        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequestInterface');
+        $req = new \Dispatcher\Http\DummyRequest(array('method' => 'HEAD'));
 
-        $controller = $this->getMock(
-            'Dispatcher\\DispatchableController',
-            array('getViews', 'getContextData'));
-        $controller->expects($this->once())
-            ->method('getViews')
-            ->will($this->returnValue(array('index')));
-        $controller->expects($this->once())
-            ->method('getContextData')
-            ->will($this->returnValue(array('message' => 'Hey')));
+        $sut = $this->getMockBuilder('Dispatcher\\DispatchableController')
+            ->setMethods(array('somemethod'))
+            ->getMock();
 
-        $response = $controller->get($requestMock);
-
-        $this->assertInstanceOf(
-            'Dispatcher\\Http\\ViewTemplateResponse',$response);
-        $this->assertEquals(array('message' => 'Hey'), $response->getContent());
-        $this->assertContains('index', $response->getViews());
-    }
-
-    /**
-     * @test
-     * @expectedException \Dispatcher\Exception\DispatchingException
-     * @expectedExceptionMessage No views defined.
-     */
-    public function get_without_view_should_throw_DispatchingException()
-    {
-        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequestInterface');
-
-        $controller = $this->getMock(
-            'Dispatcher\\DispatchableController', array('getContextData'));
-        $controller->expects($this->once())
-            ->method('getContextData')
-            ->will($this->returnValue(array('message' => 'Hey')));
-
-        $controller->get($requestMock);
-    }
-
-    /**
-     * @test
-     */
-    public function doDispatch_on_not_implemented_request_handler_should_return_501_response()
-    {
-        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
-            array('getMethod'));
-        $requestMock->expects($this->any())
-            ->method('getMethod')
-            ->will($this->returnValue('POST'));
-
-        $controller = $this->getMock(
-            'Dispatcher\\DispatchableController', array('getViews'));
-        $controller->expects($this->never())
-            ->method('getViews')
-            ->will($this->returnValue(array('index')));
-
-        $response = $controller->doDispatch($requestMock, array());
+        $response = $sut->doDispatch($req);
         $this->assertEquals(501, $response->getStatusCode());
     }
 
     /**
      * @test
      */
-    public function doDispatch_on_valid_request_method_should_return_200_response()
+    public function doDispatch_with_more_args_than_request_handler_expected_should_return_404_response()
     {
-        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
-            array('getMethod'));
-        $requestMock->expects($this->any())
-            ->method('getMethod')
-            ->will($this->returnValue('GET'));
+        // GET request
+        $req = new \Dispatcher\Http\DummyRequest();
 
-        $controller = $this->getMock(
-            'Dispatcher\\DispatchableController', array('get'));
-        $controller->expects($this->once())->method('get')->with(
-            $this->isInstanceOf('Dispatcher\\Http\\HttpRequestInterface'))
-            ->will($this->returnValue(new JsonResponse()));
+        $sut = $this->getMockBuilder('Dispatcher\\DispatchableController')
+            ->setMethods(array('somemethod'))
+            ->getMock();
 
-        $response = $controller->doDispatch($requestMock, array());
-        $this->assertEquals(200, $response->getStatusCode());
-    }
-
-    /**
-     * @test
-     */
-    public function doDispatch_without_expected_args_should_return_404_response()
-    {
-        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
-            array('getMethod'));
-        $requestMock->expects($this->any())
-            ->method('getMethod')
-            ->will($this->returnValue('POST'));
-
-        $controller = $this->getMock(
-            'Dispatcher\\DispatchableController', array('post'));
-        $controller->expects($this->any())
-            ->method('post')
-            ->will($this->returnValue(new JsonResponse()));
-
-        $response = $controller->doDispatch($requestMock, array());
+        $response = $sut->doDispatch($req, array('id'));
         $this->assertEquals(404, $response->getStatusCode());
     }
 
     /**
      * @test
-     * @expectedException \Dispatcher\Exception\DispatchingException
      */
-    public function doDispatch_from_null_response_should_throw_DispatchingException()
+    public function doDispatch_should_throw_DispatchingException_for_invalid_response_from_request_handler()
     {
-        $requestMock = $this->getMock('Dispatcher\\Http\\HttpRequest',
-            array('getMethod'));
-        $requestMock->expects($this->any())
-            ->method('getMethod')
-            ->will($this->returnValue('get'));
+        // GET request
+        $req = new \Dispatcher\Http\DummyRequest();
 
-        $controller = $this->getMock(
-            'Dispatcher\\DispatchableController', array('get'));
-        $controller->expects($this->any())
+        $sut = $this->getMockBuilder('Dispatcher\\DispatchableController')
+            ->setMethods(array('get'))
+            ->getMock();
+        $sut->expects($this->once())
             ->method('get')
-            ->will($this->returnValue(null));
+            ->will($this->returnValue('hey'));
 
-        $controller->doDispatch($requestMock, array());
+        try {
+            $sut->doDispatch($req);
+        } catch (DispatchingException $ex) {
+            return;
+        }
+
+        $this->fail('Expected DispatchingException');
+    }
+
+    /**
+     * @test
+     */
+    public function doDispatch_for_default_get_request_handler_should_return_response_with_view_in_response_content()
+    {
+        $expected = array('index');
+
+        $req = new \Dispatcher\Http\DummyRequest();
+
+        $sut = $this->getMockBuilder('Dispatcher\\DispatchableController')
+            ->setMethods(array('getViews'))
+            ->getMock();
+        $sut->expects($this->once())
+            ->method('getViews')
+            ->will($this->returnValue($expected));
+
+        $response = $sut->doDispatch($req);
+
+        $this->assertEquals($expected, $response->getContent());
     }
 }
