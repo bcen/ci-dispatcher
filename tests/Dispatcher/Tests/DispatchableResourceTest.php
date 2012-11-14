@@ -325,4 +325,72 @@ class DispatchableResourceTest extends \PHPUnit_Framework_TestCase
             }
         '), $response->getContent());
     }
+
+    /**
+     * @test
+     */
+    public function applyHydrationOn_should_get_deserialized_json_data_from_bundle()
+    {
+        $req = new \Dispatcher\Http\DummyRequest(array(
+            'rawContent' => '{"username":"someone"}',
+            'contentType' => 'application/json'
+        ));
+
+
+        // Test subject
+        $matcher = $this->logicalAnd(
+            $this->isInstanceOf('Dispatcher\\Common\\ResourceBundle'),
+            $this->attributeEqualTo('_attr', array('data' => array('username' => 'someone')))
+        );
+
+
+        $sut = $this->getMockBuilder('Dispatcher\\DispatchableResource')
+            ->setMethods(array('applyHydrationOn'))
+            ->getMock();
+        $sut->expects($this->once())
+            ->method('applyHydrationOn')
+            ->with($matcher)
+            ->will($this->throwException(new \InvalidArgumentException()));
+
+        try {
+            $sut->post($req);
+        } catch (\InvalidArgumentException $ex) {
+            return;
+        }
+        $this->fail();
+    }
+
+    /**
+     * @test
+     */
+    public function applyHydrationOn_should_get_deserialized_xml_data_from_bundle()
+    {
+        $req = new \Dispatcher\Http\DummyRequest(array(
+            'rawContent' => '<?xml version="1.0" encoding="utf-8"?><request><username>someone</username></request>',
+            'contentType' => 'application/xml'
+        ));
+
+
+        // Test subject
+        $matcher = $this->logicalAnd(
+            $this->isInstanceOf('Dispatcher\\Common\\ResourceBundle'),
+            $this->attributeEqualTo('_attr', array('data' => array('username' => 'someone')))
+        );
+
+
+        $sut = $this->getMockBuilder('Dispatcher\\DispatchableResource')
+            ->setMethods(array('applyHydrationOn'))
+            ->getMock();
+        $sut->expects($this->once())
+            ->method('applyHydrationOn')
+            ->with($matcher)
+            ->will($this->throwException(new \InvalidArgumentException()));
+
+        try {
+            $sut->post($req);
+        } catch (\InvalidArgumentException $ex) {
+            return;
+        }
+        $this->fail();
+    }
 }

@@ -383,6 +383,17 @@ abstract class DispatchableResource implements DispatchableInterface
 
     protected function applyDeserializationOn(ResourceBundle $bundle)
     {
+        $raw = $bundle->getRequest()->getRawContent();
+        $contentType = $bundle->getRequest()->getContentType();
+
+        if ($contentType === 'application/xml') {
+            $data = $raw ? (array)simplexml_load_string(
+                $raw, 'SimpleXMLElement', LIBXML_NOCDATA) : null;
+            $bundle->setData($data);
+        } elseif ($contentType === 'application/json') {
+            $data = json_decode(trim($raw), true);
+            $bundle->setData($data);
+        }
     }
 
     /**
